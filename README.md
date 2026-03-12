@@ -107,6 +107,14 @@ npm run db
 ```
 
 Start the development server
+
+```
+cd server
+```
+
+``` npm install
+```
+
 ```
 npm run dev
 ```
@@ -114,7 +122,7 @@ npm run dev
 The server will start at:
 
 ```
-http://localhost:3000
+http://localhost:5000
 ```
 
 ---
