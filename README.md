@@ -80,7 +80,7 @@ Create a `.env` file in the root directory.
 Example configuration:
 
 ```
-PORT=3000
+PORT=5000
 
 DB_USER=postgres
 DB_HOST=localhost

@@ -1,0 +1,18 @@
+services:
+  cv-db:
+    image: postgres:16
+    container_name: health-blog-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: health-blog-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./server/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - data-system-network
+
+networks:
+  data-system-network:
+    driver: bridge
