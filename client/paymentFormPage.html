@@ -1,27 +1,64 @@
 <!------------------ HTML ------------------>
 <html>
     <head>
-        <link rel="stylesheet" href="/styles.css">
-        <title>Payment form</title>
         <script src="/components/header.js"></script>
+        <title>Checkout</title>
+        <link rel="stylesheet" href="paymentFormPage.css"/>
     </head>
     <body>
-        <div id="header"></div>
-        <main>
-            <h1>Payment Form</h1>
-            <h2>Contact Details</h2>
-            <form action="payment.html">
+        <div class="checkout-wrapper">
+            <h1>Complete your purchase</h1>
+            <form id="payment-form">
                 <!-- email -->
-                <label for="email">Email</label>
-                <input type="email" id="email" name="emailadd" placeholder="example@email.com">
-                <!-- first name -->
-                <label for="fname">First Name</label> 
-                <input type="text" id="fname" name="firstname" placeholder="First name">
-                <!-- last name  -->
-                <label for="lname">Last Name</label>
-                <input type="text" id="lname" name="lastname" placeholder="Last name">
-            </div>
-        </main>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="example@email.com"/>
+                </div>
+                <!-- payment methods -->
+                <p class="subtitle">Choose a payment method to get started</p>
+                <!-- paypal -->
+                <button class="pay-button pp-button" type="button">
+                    <p>PayPal</p>
+                </button>
+                <!-- apple pay -->
+                <button class="pay-button ap-button" type="button">
+                    <p>Apple Pay</p>
+                </button>
+                <!-- google pay -->
+                <button class="pay-button gp-button" type="button">
+                    <p>Google Pay</p>
+                </button>
+                <!-- address line 1 -->
+                <div class="form-group">
+                    <label for="address1">Address line 1</label>
+                    <input type="text" id="address1" name="address1"/>
+                </div>
+                <!-- address line 2 -->
+                <div class="form-group">
+                    <label for="address2">Address line 2</label>
+                    <input type="text" id="address2" name="address2"/>
+                </div>
+                <!-- city, country, postcode -->
+                <div class="row-2">
+                    <!-- city -->
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city"/>
+                    </div>
+                    <!-- country -->
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <select class="country-input" name="country-selector" id="country-selector">
+                            <option value="0">Select option</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="AU">Australia</option>
+                            <option value="CA">Canada</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="submit-button" type="submit">Confirm & Pay £2.99</button>
+            </form>
+        </div>
     </body>
 </html>
 
