@@ -8,74 +8,87 @@
     <body>
         <!-- LEFT: checkout summary -->
         <div class="checkout-wrapper">
-            <h1>Complete your purchase</h1>
-            <form id="payment-form">
-                <!-- email -->
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="example@email.com"/>
-                </div>
-                <!-- payment methods -->
-                <p class="subtitle">Choose a payment method to get started</p>
-                <!-- paypal -->
-                <button class="pay-button pp-button" type="button">
-                    <p>PayPal</p>
-                </button>
-                <!-- apple pay -->
-                <button class="pay-button ap-button" type="button">
-                    <p>Apple Pay</p>
-                </button>
-                <!-- google pay -->
-                <button class="pay-button gp-button" type="button">
-                    <p>Google Pay</p>
-                </button>
-                <!-- address line 1 -->
-                <div class="form-group">
-                    <label for="address1">Address line 1</label>
-                    <input type="text" id="address1" name="address1"/>
-                </div>
-                <!-- address line 2 -->
-                <div class="form-group">
-                    <label for="address2">Address line 2</label>
-                    <input type="text" id="address2" name="address2"/>
-                </div>
-                <!-- city, country, postcode -->
-                <div class="row-2">
-                    <!-- city -->
-                    <div class="form-group">
-                        <label for="city">City</label>
-                        <input type="text" id="city" name="city"/>
+            <div class="form-panel">
+                <h1 class="form-title">Complete your purchase</h1>
+                <form id="payment-form">
+                    <hr class="divider"/>
+                    <!-- payment methods -->
+                    <p class="subtitle">Choose a payment method to get started</p>
+                    <div class="pay-options">
+                        <!-- paypal -->
+                        <button class="pay-button pp-button" type="button">
+                            <p>PayPal</p>
+                        </button>
+                        <!-- apple pay -->
+                        <button class="pay-button ap-button" type="button">
+                            <p>Apple Pay</p>
+                        </button>
+                        <!-- google pay -->
+                        <button class="pay-button gp-button" type="button">
+                            <p>Google Pay</p>
+                        </button>
                     </div>
-                    <!-- country -->
+                    <!-- address line 1 -->
                     <div class="form-group">
-                        <label for="country">Country</label>
-                        <select class="country-input" name="country-selector" id="country-selector">
-                            <option value="0">Select option</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="AU">Australia</option>
-                            <option value="CA">Canada</option>
-                        </select>
+                        <label for="address1">Address line 1</label>
+                        <input type="text" id="address1" name="address1"/>
                     </div>
-                </div>
-                <button class="submit-button" type="submit">Confirm & Pay £2.99</button>
-            </form>
-        </div>
-        <!-- RIGHT: blog article summary -->
-        <div class="article-wrapper">
-            <div>
-                <h1 class="article-title">Diabetes Support</h1>
-                <p class="article-author">By Melissa Carter</p>
+                    <!-- address line 2 -->
+                    <div class="form-group">
+                        <label for="address2">Address line 2</label>
+                        <input type="text" id="address2" name="address2"/>
+                    </div>
+                    <!-- city, country, postcode -->
+                    <div class="row-2">
+                        <!-- city -->
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" id="city" name="city"/>
+                        </div>
+                        <!-- country -->
+                        <div class="form-group">
+                            <label for="country">Country</label>
+                            <select type="text" class="country-input" name="country-selector" id="country-selector">
+                                <option value="0">Select option</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="AU">Australia</option>
+                                <option value="CA">Canada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- email -->
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="example@email.com"/>
+                    </div>
+                    <button class="submit-button" type="submit">Confirm & Pay £2.99</button>
+                </form>
             </div>
-            <div>
-                <hr class="divider"/>
-                <div class="price-row">
-                    <span class="price-label">Article access</span>
-                    <span class="price-value">£2.99</span>
+            <!-- RIGHT: blog article summary -->
+            <div class="article-wrapper">
+                <div>
+                    <h1 class="article-title">Diabetes Support</h1>
+                    <span class="article-tag">Health support</span>
+                    <p class="article-author">By Melissa Carter · May 2026</p>
+                    <div class="article-preview">
+                        <p><strong>Article preview </strong>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+                            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
+                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+                            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        </p>
+                    </div>
                 </div>
-                <hr class="divider"/>
-                <div class="price-row">
-                    <span class="price-total-label">Total</span>
-                    <span class="price-total-value">£2.99</span>
+                <div>
+                    <hr class="divider"/>
+                    <div class="price-row">
+                        <span class="price-label">Article access</span>
+                        <span class="price-value">£2.99</span>
+                    </div>
+                    <hr class="divider"/>
+                    <div class="price-row">
+                        <span class="price-total-label"><strong>Total</strong></span>
+                        <span class="price-total-value">£2.99</span>
+                    </div>
                 </div>
             </div>
         </div>
