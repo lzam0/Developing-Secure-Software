@@ -16,14 +16,36 @@
             </ul>
 </nav>
 
-    <h1>Health Metrics  Tracker</h1>
+    <h1 class="title">Health Metrics  Tracker</h1>
 
     <button class="btn" onclick="addEntry()">Add Entry</button>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add Health Metric</h2>
+            <form id="entryForm" class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+                <label for="metric">Health Metric:</label>
+                <input type="text" id="metric" name="metric" required>
+                <label for="current">Current Value:</label>
+                <input type="text" id="current" name="current" required>
+                <label for="goal">Goal Value:</label>
+                <input type="text" id="goal" name="goal">
+                <label for="notes">Notes:</label>
+                <textarea id="notes" name="notes"></textarea>
+                <button type="submit" class="btn">Add Entry</button>
+            </form>
+        </div>
 
-    <div> 
+    
+    
+
+        </ul>
+        <div> 
 
         <table id="trackerTable">
-            <tr>
+            <tr class="t-header">
                 <th>Date</th>
                 <th>Health Metric</th>
                 <th>Current</th>
@@ -33,11 +55,163 @@
         </table>
         
     </div>
-    
-
-        </ul>
+        
 
         <main>
            
+
+            <script>
+                const modal = document.getElementById("myModal");
+                const span = document.getElementsByClassName("close")[0];
+
+                function addEntry() {
+                    modal.style.display = "flex";
+                }
+
+                span.onclick = function() {
+                    modal.style.display = "none";
+                }
+
+                window.onclick = function(event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                }
+
+                const entryForm = document.getElementById("entryForm");
+                const trackerTable = document.getElementById("trackerTable");
+
+                entryForm.onsubmit = function(e)
+                {
+                    e.preventDefault();
+
+                    const date = document.getElementById("date").value;
+                    const metric = document.getElementById("metric").value;
+                    const current = document.getElementById("current").value
+                    const goal = document.getElementById("goal").value;
+                    const notes = document.getElementById("notes").value;
+
+                    const row = trackerTable.insertRow(-1);
+                    row.insertCell(0).textContent = date;
+                    row.insertCell(1).textContent = metric;
+                    row.insertCell(2).textContent = current;
+                    row.insertCell(3).textContent = goal;
+                    row.insertCell(4).textContent = notes;
+
+                    entryForm.reset();
+                    modal.style.display = "none";
+                };
+
+            </script>
     </body> 
 </html>
+
+<style>
+
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover{
+        color:black;
+    }
+    
+
+     .title {
+        margin-top: 50px;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #333;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        text-decoration: none;
+        border:none;
+        border-radius: 5px;
+        font-family: 'Arial', sans-serif;
+    }
+
+    #trackerTable {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .t-header {
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: #e4f7e4;
+    }
+
+    .modal {
+        display: none; 
+        position: fixed; 
+        z-index: 1; 
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100%; 
+        justify-content: center;
+        align-items: center;
+        overflow: auto; 
+        background-color: rgb(0,0,0); 
+        background-color: rgba(0,0,0,0.4); 
+    }
+
+      .modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 400px; 
+    max-width: 90%; 
+
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+    position: relative; 
+}
+
+
+    #trackerTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+}
+
+#trackerTable th, #trackerTable td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    font-family: Arial, sans-serif;
+}
+
+.t-header {
+    background-color: #e4f7e4;
+    font-weight: bold;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;     
+    margin-bottom: 5px;  
+}
+
+.form-group input {
+    width: 100%;         
+    padding: 8px;       
+}
+
+
+
+
+
+</style>

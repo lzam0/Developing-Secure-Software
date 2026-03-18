@@ -6,7 +6,7 @@
     </head>
     <body>
         <ul>
-           <nav>
+           <nav class="navbar">
             <ul>
             <a href="/pages/index.html">Home</a>
 
@@ -17,11 +17,12 @@
 </nav>
 
 
-    <h1>Health Diary</h1>
+    <h1 class="title">Health Diary</h1>
 
+    <div class="box">
     <a href="medication-tracker.html" class="btn">Medication/Supplement Tracker</a>
     <a href="health-metrics-tracker.html" class="btn">Health Metrics Tracker</a>
-
+    </div>
         </ul>
 
         <main>
@@ -37,8 +38,30 @@
         color: white;
         text-decoration: none;
         border-radius: 5px;
+        font-family: 'Arial', sans-serif;
     }
 
     .btn:hover {
         background-color: #45a049;
     }
+
+    .title {
+        margin-top: 50px;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #333;
+    }
+
+    .box {
+        justify-content: center;
+        margin-top: 50px;
+        display: flex;
+        gap: 20px;
+
+    }
+
+
+    .navbar{
+        font-family: 'Arial', sans-serif;
+    }
+</style>
