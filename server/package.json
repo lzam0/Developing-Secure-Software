@@ -1,0 +1,28 @@
+{
+  "scripts": {
+
+    "dev": "nodemon src/server.ts",
+
+    "build": "tsc",
+
+    "start": "node dist/server.ts",
+
+    "db": "docker-compose down -v && docker-compose up --build -d"
+
+  },
+
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14",
+    "pg": "^8.20.0"
+  },
+
+  "devDependencies": {
+    "@types/pg": "^8.18.0",
+    "@types/node": "*",
+    "ts-node": "*",
+    "typescript": "*"
+  }
+}

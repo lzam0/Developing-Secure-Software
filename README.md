@@ -80,7 +80,7 @@ Create a `.env` file in the root directory.
 Example configuration:
 
 ```
-PORT=3000
+PORT=5000
 
 DB_USER=postgres
 DB_HOST=localhost
@@ -107,6 +107,14 @@ npm run db
 ```
 
 Start the development server
+
+```
+cd server
+```
+
+``` npm install
+```
+
 ```
 npm run dev
 ```
@@ -114,7 +122,7 @@ npm run dev
 The server will start at:
 
 ```
-http://localhost:3000
+http://localhost:5000
 ```
 
 ---
