@@ -43,14 +43,21 @@ Development Tools
 project-root
 │
 ├── server
-│   ├── server.js
+│   ├── server.ts
+│   ├── routes/             → Define API endpoints
+│   ├── controllers/        → Handle HTTP requests/ responses
+│   ├── middleware/         → Auth, validation, error handling
+│   ├── services/           → Business logic (CRUD operations, validation)
+│   ├── db/                 → Database connection and queries
+│   ├── node_modules/
+│   ├── package.json
+│   ├── tsconfig.json
 │
-├── public
+├── client
 │   ├── index.html
 │   └── styles.css
 │
 ├── .env
-├── package.json
 └── README.md
 ```
 
@@ -80,13 +87,18 @@ Create a `.env` file in the root directory.
 Example configuration:
 
 ```
-PORT=5000
+# Serber Configuration
+PORT = 5000
 
+# Database Details
 DB_USER=postgres
 DB_HOST=localhost
-DB_NAME=blog-app
+DB_NAME=health-blog-app
 DB_PASSWORD=mypassword
 DB_PORT=5432
+
+# JWT Secret Key
+JWT_WEB_TOKEN_SECRET=your_jwt_secret_key
 ```
 
 ---

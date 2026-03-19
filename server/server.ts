@@ -1,14 +1,22 @@
-require("dotenv").config()
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const express = require("express");
-const cors = require("cors");
 // const pool = require("pool");
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("client"));
+app.use(express.static(path.join(__dirname, "../client")));
 
 const PORT = process.env.PORT
 
