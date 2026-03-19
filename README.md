@@ -151,3 +151,5 @@ The frontend is located inside the **public** directory and includes:
 * CSS styling
 
 
+# Security
+To prevent SQL Injection read into here: https://snyk.io/blog/preventing-sql-injection-attacks-node-js/

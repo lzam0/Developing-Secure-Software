@@ -1,30 +1,62 @@
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
-function authenticateToken(req, res, next) {
+// Validate JWT_SECRET exists
+if (!process.env.JWT_WEB_TOKEN_SECRET) {
+    throw new Error('FATAL: JWT_WEB_TOKEN_SECRET is not defined in .env file');
+}
+
+const JWT_SECRET: jwt.Secret = process.env.JWT_WEB_TOKEN_SECRET;
+
+/**
+ * Middleware to verify JWT token and attach user to request
+ * Supports both Authorization header (Bearer token) and cookies
+ */
+
+export const authenticateToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) : void => {
+  // Information log for debugging
   console.log('Authenticating token...');
 
-  // Check Authorization header first
+  // Check cookies for token
   const token = req.cookies?.token;
 
   // If no token, return unauthorized
   if (!token) {
-    console.log('No token found, redirecting to /login');
-    return res.status(401).json({ message: "Unauthorized" }); // error 401
+    console.log('No token found');
+    res.status(401).json({
+      success: false,
+      message: 'Access token required'
+      });
+    return;
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.log('Token verification failed:', err);
-      return res.status(403).json({ message: "Forbidden" }); // error 403
-
+  // Verify token
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if(err) {
+      console.log('Token verification failed:', err.message);
+      res.status(403).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+      
+      return;
     }
-    console.log('Token verified, user:', user);
-    req.user = user;
+
+    // Log decoded token for debugging
+    console.log('Token verified, user:', decoded);
+        
+    // Attach user to request
+    (req as any).user = decoded;
+    
     next();
   });
-}
+};
 
-
-module.exports = authenticateToken;
+export default authenticateToken;
