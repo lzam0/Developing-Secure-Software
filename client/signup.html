@@ -9,11 +9,11 @@
         <ul>
            <nav class="navbar">
             <ul>
-            <a href="index.html">Home</a>
+            <a  href="index.html">Home</a>
 
-            <a class="current" href="login.html">Login</a>
+            <a href="login.html">Login</a>
 
-            <a href="signup.html">Sign Up</a>
+            <a class="current" href="signup.html">Sign Up</a>
             </ul>
 </nav>
         <header>
@@ -21,12 +21,16 @@
         </header>
 
         <main>
-        <p class="description">Please enter your username and password to continue.</p>
+        <p class="description">Create an account to continue.</p>
 
         <div class="login-box">
         <form method="post" action="/" id="login_form">
             <label for="username_input">Username:</label>
             <input type="text" id="username_input" name="username_input" placeholder="Please enter your username...">
+
+            <label for="email_input">Email:</label>
+            <input type="email" id="email_input" name="email_input" placeholder="Please enter your email...">
+
 
             <label for="password_input">Password:</label>
             <input type="password" id="password_input" name="password_input" placeholder="Please enter your password...">
@@ -34,7 +38,7 @@
             <button id="login_btn" type="submit">Log in</button>
         </form>
         </div>
-        <p class="description">Dont have an account? <a href="signup.html">Sign up</a></p>
+        <p class="description">Already have an account? <a href="login.html">Log in</a></p>
         </main>
     </body>
 </html>
@@ -98,7 +102,7 @@
     }
 
 
-    #password_input, #username_input {
+    #password_input, #username_input, #email_input {
         margin-bottom: 20px;
         padding: 5px;
         border: 1px solid #ccc;
