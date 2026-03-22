@@ -6,9 +6,97 @@
     </head>
     <body>
         <div id="header"></div>
-        <main>
-            <h1>Health and Lifestyle Blog</h1>
-            <p>Welcome to our blog about health and lifestyle!</p>
+
+         <ul>
+           <nav class="navbar">
+            <ul>
+            <a class="current" href="/pages/index.html">Home</a>
+
+            
+            <a href="/pages/login.html">Login</a>
+
+            <a href="/pages/signup.html">Sign Up</a>
+            </ul>
+</nav>
+
+        <main class="main-body">
+            <h1 class="title">Health and Lifestyle Blog</h1>
+            <p class="description">Boosting your health and well-being through data and dialogue.</p>
+            <div class="box">
+            <a href="login.html" class="btn">Login</a>
+            <a href="signup.html" class="btn">Sign Up</a>
+            </div>
         </main>
     </body> 
 </html>
+
+<style>
+
+
+body{
+    background-image: url('components/health-background.jpg');
+    background-size: cover;
+}
+
+
+     .title {
+        margin-top: 200px;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+        font-size: 48px;
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #485b49;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .box {
+        justify-content: center;
+        margin-top: 30px;
+        display: flex;
+        gap: 20px;
+    }
+
+     .btn:hover {
+        background-color: #3e4a3b;
+    }
+
+    .description {
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        margin-top: 20px;
+    }
+
+    .navbar {
+        background-color: #f0f0f0;
+        padding: 10px;
+        font-family: 'Arial', sans-serif;
+    }
+
+
+    .navbar a {
+        margin: 0 15px;
+        text-decoration: none;
+        color: #333;
+    }
+
+    .current {
+        font-weight: bold;
+        background-color: rgb(189, 202, 198);
+    }
+
+   
+    .navbar a:hover {
+        color: #4CAF50;
+    }
+</style>
