@@ -34,8 +34,10 @@
 
             <label for="password_input">Password:</label>
             <input type="password" id="password_input" name="password_input" placeholder="Please enter your password...">
+            <label for="confirm_password_input">Confirm Password:</label>
+            <input type="password" id="confirm_password_input" name="confirm_password_input" placeholder="Please confirm your password...">
 
-            <button id="login_btn" type="submit">Log in</button>
+            <button id="login_btn" type="submit">Sign Up</button>
         </form>
         </div>
         <p class="description">Already have an account? <a href="login.html">Log in</a></p>
@@ -76,8 +78,8 @@
     }
 
     .login-box {
-        background-color: rgba(251, 234, 234, 0.8);
-        padding: 40px;
+        background-color:rgba(250, 242, 242, 0.8);
+        padding: 32px;
         border-radius: 10px;
         border-color: rgb(126, 126, 126);
         width: 300px;
@@ -102,7 +104,7 @@
     }
 
 
-    #password_input, #username_input, #email_input {
+    #password_input, #username_input, #email_input, #confirm_password_input {
         margin-bottom: 20px;
         padding: 5px;
         border: 1px solid #ccc;
