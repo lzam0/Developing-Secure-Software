@@ -5,6 +5,10 @@
         <title>Write a blog post</title>
     </head>
     <body>
+        <nav class="topbar">
+            <!-- link back home -->
+            <a href="/index.html" class="back-link">← Back</a>
+        </nav>
         <main class="page">
             <h1 class="page-heading">Write a new blog post</h1>
             <!-- <p class="page-sub">Share your health insights with the community!</p> -->
@@ -23,10 +27,10 @@
                     <div class="form-group">
                         <label for="tag">Tag</label>
                         <select id="category">
-                            <option>Sleep &amp; Recovery</option>
-                            <option>Lifestyle</option>
                             <option>Health Support</option>
+                            <option>Lifestyle</option>
                             <option>Mindfulness</option>
+                            <option>Sleep &amp; Recovery</option>
                         </select>
                     </div>
                 </div>
@@ -67,9 +71,34 @@
             min-height: 100vh;
         }
 
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #fff9f3;
+            border-bottom: 1px solid #e8ede9;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            height: 62px;
+            box-shadow: 0 1px 12px rgba(61, 43, 21, 0.06);
+        }
+
+        .back-link {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6b4c3b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #7a9e7e;
+        }
+
         .page {
             max-width: 860px;
-            margin: 2.5rem auto 4rem;
+            margin: 1.2rem auto 3rem;
             padding: 0 1.5rem;
         }
 
@@ -78,7 +107,7 @@
             font-size: 2rem;
             font-weight: 700;
             color: #3d2b1f;
-            margin-bottom: 1.1rem;
+            margin-bottom: 1rem;
         }
 
         .page-sub {
