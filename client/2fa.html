@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Health and Lifestyle Blog Login</title>
+        <meta charset="utf-8">
+        <script src="../js/login.js" defer></script>
+    </head>
+    <body>
+        <ul>
+           <nav class="navbar">
+            <ul>
+            <a href="index.html">Home</a>
+
+            <a href="login.html">Login</a>
+
+            <a href="signup.html">Sign Up</a>
+            </ul>
+</nav>
+<header>
+            <h1 class="title">Welcome to Health and Lifestyle Blog!</h1>
+        </header>
+
+        <main>
+        <p class="description">Please enter the verification code sent to your email.</p>
+        <div class="login-box">
+        <form method="post" action="/" id="mfa_form">
+            <label for="mfa_code_input">Verification Code:</label>
+            <input type="text" id="mfa_code_input" name="mfa_code_input" placeholder="Enter the code...">
+
+            <button id="verify_btn" type="submit">Verify</button>
+        </form>
+        </div>
+        </main>
+    </body>
+</html>
+
+<style>
+    .title {
+    font-size: 26px;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        margin-top: 20px;
+    }
+
+     .description {
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        margin-top: 20px;
+        
+    }
+        #mfa_code_input {
+            
+            margin-top: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 5px;
+        }
+    
+        #verify_btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #485b49;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+                font-family: 'Arial', sans-serif;
+        }
+
+        .navbar {
+        background-color: #f0f0f0;
+        padding: 10px;
+        font-family: 'Arial', sans-serif;
+    }
+
+
+    .navbar a {
+        margin: 0 15px;
+        text-decoration: none;
+        color: #333;
+    }
+
+    .login-box {
+        background-color: rgba(251, 234, 234, 0.8);
+        padding: 40px;
+        border-radius: 10px;
+        border-color: rgb(126, 126, 126);
+        width: 300px;
+        margin: 0 auto;
+        margin-top: 50px;
+        border-width: 1px;
+        border-style: solid;
+        font-family: 'Arial', sans-serif;
+
+    }
+
+</style>
