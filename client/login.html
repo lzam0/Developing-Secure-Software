@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Health and Lifestyle Blog Login</title>
+        <meta charset="utf-8">
+        <script src="../js/login.js" defer></script>
+    </head>
+    <body>
+        <ul>
+           <nav class="navbar">
+            <ul>
+            <a href="index.html">Home</a>
+
+            <a class="current" href="login.html">Login</a>
+
+            <a href="signup.html">Sign Up</a>
+            </ul>
+</nav>
+        <header>
+            <h1 class="title">Welcome to Health and Lifestyle Blog!</h1>
+        </header>
+
+        <main>
+        <p class="description">Please enter your username and password to continue.</p>
+
+        <div class="login-box">
+        <form method="post" action="/" id="login_form">
+            <label for="username_input">Username:</label>
+            <input type="text" id="username_input" name="username_input" placeholder="Please enter your username...">
+
+            <label for="password_input">Password:</label>
+            <input type="password" id="password_input" name="password_input" placeholder="Please enter your password...">
+
+            <button id="login_btn" type="submit">Log in</button>
+        </form>
+        </div>
+        <p class="description">Dont have an account? <a href="signup.html">Sign up</a></p>
+        </main>
+    </body>
+</html>
+
+
+<style>
+
+
+
+
+.title {
+    font-size: 26px;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        margin-top: 20px;
+    }
+
+     .description {
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        margin-top: 20px;
+        
+    }
+   
+    #login_form {
+        margin-top: 50px;
+        font-family: 'Arial', sans-serif;
+        font-size: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    
+    }
+
+    .login-box {
+        background-color: rgba(250, 242, 242, 0.8);
+        padding: 32px;
+        border-radius: 10px;
+        border-color: rgb(126, 126, 126);
+        width: 300px;
+        margin: 0 auto;
+        margin-top: 50px;
+        border-width: 1px;
+        border-style: solid;
+
+    }
+
+    .navbar {
+        background-color: #f0f0f0;
+        padding: 10px;
+        font-family: 'Arial', sans-serif;
+    }
+
+
+    .navbar a {
+        margin: 0 15px;
+        text-decoration: none;
+        color: #333;
+    }
+
+
+    #password_input, #username_input {
+        margin-bottom: 20px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    #login_btn {
+         padding: 10px 20px;
+        background-color: #485b49;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-family: 'Arial', sans-serif;
+    }
+
+    #login_btn:hover {
+        background-color: #f2875c;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    input {
+        width: 200px;
+        height: 25px;
+        display: block;
+        font-size: 14px;
+    }
+
+    .current {
+        font-weight: bold;
+        background-color: rgb(189, 202, 198);
+    }
+</style>
