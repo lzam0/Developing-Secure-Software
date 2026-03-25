@@ -5,15 +5,10 @@
         <script src="/components/header.js"></script>
     </head>
     <body>
-        <ul>
-           <nav class="navbar">
-            <ul>
-            <a href="/pages/index.html">Home</a>
-
-            <a href="/pages/healthdiary.html">Diary</a>
-
-            <a href="/pages/blogs.html">Blogs</a>
-            </ul>
+       <nav class="navbar">
+    <a href="/pages/index.html">Home</a>
+    <a href="/pages/healthdiary.html" class="current">Diary</a>
+    <a href="/pages/blogs.html">Blogs</a>
 </nav>
 
 
@@ -23,7 +18,7 @@
     <a href="medication-tracker.html" class="btn">Medication/Supplement Tracker</a>
     <a href="health-metrics-tracker.html" class="btn">Health Metrics Tracker</a>
     </div>
-        </ul>
+        
 
         <main>
            
@@ -31,6 +26,25 @@
 </html>
 
 <style>
+
+    .navbar {
+    background-color: #fff;
+    padding: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+}
+
+.navbar a {
+    margin: 0 20px;
+    text-decoration: none;
+    color: #666;
+    font-weight: 500;
+}
+
+.navbar a.current { color: #4CAF50; border-bottom: 2px solid #4CAF50; }
+
+
     .btn {
         display: inline-block;
         padding: 10px 20px;
