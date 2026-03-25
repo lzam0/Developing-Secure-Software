@@ -1,6 +1,6 @@
 import pool from "../controllers/database.js";
 export class UserModel {
-    /****************************************************/
+    
     // Find user by email
     static async findByEmail(email) {
         const query = "SELECT * FROM users WHERE email = $1";
@@ -22,7 +22,7 @@ export class UserModel {
         const result = await pool.query(query, values);
         return result.rows[0];
     }
-    /****************************************************/
+
     // Create new user
     static async create(username, email, password) {
         const query = `

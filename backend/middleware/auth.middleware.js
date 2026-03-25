@@ -5,7 +5,9 @@ dotenv.config();
 if (!process.env.JWT_WEB_TOKEN_SECRET) {
     throw new Error('FATAL: JWT_WEB_TOKEN_SECRET is not defined in .env file');
 }
+
 const JWT_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
+
 /**
  * Middleware to verify JWT token and attach user to request
  * Supports both Authorization header (Bearer token) and cookies
