@@ -1,0 +1,290 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="/styles.css">
+        <title>Health and Lifestyle Blog</title>
+        <script src="/components/header.js"></script>
+    </head>
+    <body>
+        <div id="header"></div>
+        <ul>
+           <nav class="navbar">
+            <ul>
+            <a href="index.html">Home</a>
+
+            <a class="current" href="login.html">Diary</a>
+
+            <a href="signup.html">Blogs</a>
+            </ul>
+</nav>
+        <main>
+            <h1 class="title">Account & Profile Settings</h1>
+            <p class="description">Manage your account and profile information here.</p>
+
+            <div>
+                <h2>Profile Information</h2>
+                
+        
+                <div class="user-info">
+                    <div class="form">
+
+                    <label>Full Name:</label>
+                    <input type="text" id="full_name_input" value="John Doe" readonly>
+                    <label>Username:</label>
+                    <input type="text" id="username_input" value="user123" readonly>
+                    <label>Bio:</label>
+                    <textarea id="bio_input" readonly> A passionate blogger about health and lifestyle.</textarea>
+                </div>
+                    
+                <button id="edit_profile_btn">Edit Profile</button>
+
+            </div>
+
+            <div>
+                <h2>Account Settings</h2>
+                <div class="form">
+                    <label>Email:</label>
+                    <input type="email" id="email_input" value="user123@example.com" readonly>
+                    
+                    <div id="password_change_area" style="display: none; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 15px;">
+            <h3>Update Password</h3>
+                <label>Current Password:</label>
+                    <input type="password" id="password_input" >
+                
+                <label>New Password:</label>
+                <input type="password" id="new_password_input">
+                
+                <label>Confirm New Password:</label>
+                <input type="password" id="confirm_password_input">
+                
+                <div style="margin-top: 10px;">
+                    <button id="save_password_btn" class="save-btn">Save New Password</button>
+                    <button id="cancel_password_btn" class="cancel-btn">Cancel</button>
+                </div>
+                </div>
+                <button id="update_email_btn">Update Email</button>
+                <button id="change_password_btn">Change Password</button>
+                <button id="delete_account_btn">Delete Account</button>
+            </div>
+
+
+
+
+        </main>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+        // load saved data
+        const fields = ['full_name_input', 'username_input', 'bio_input', 'email_input'];
+        fields.forEach(id => {
+            const savedVal = localStorage.getItem(id);
+            const element = document.getElementById(id);
+            if (savedVal && element) {
+                element.value = savedVal;
+            }
+        });
+
+        // profile edit logic
+        const editBtn = document.getElementById('edit_profile_btn');
+        const profileInputs = [
+            document.getElementById('full_name_input'),
+            document.getElementById('username_input'),
+            document.getElementById('bio_input')
+        ];
+
+        editBtn.addEventListener('click', () => {
+            // check if currently in read only mode
+            const isReadOnly = profileInputs[0].hasAttribute('readonly');
+
+            if (isReadOnly) {
+                // SWITCH TO EDIT MODE
+                profileInputs.forEach(input => input.removeAttribute('readonly'));
+                editBtn.innerText = "Save Profile";
+                editBtn.style.backgroundColor = "#27ae60";
+                
+            } else {
+                // SWITCH TO SAVE MODE
+                profileInputs.forEach(input => {
+                    input.setAttribute('readonly', true);
+                    localStorage.setItem(input.id, input.value);
+                });
+                editBtn.innerText = "Edit Profile";
+                editBtn.style.backgroundColor = "#485b49";
+                alert("Profile Saved locally!");
+            }
+        });
+
+
+        //edit email logic (mock)
+        document.getElementById('update_email_btn').addEventListener('click', () =>
+
+        {
+            const emailInput = document.getElementById('email_input');
+            if (emailInput.hasAttribute('readonly')) {
+                emailInput.removeAttribute('readonly');
+                emailInput.focus();
+                emailInput.style.borderColor = "#27ae60";
+            } else {
+                // simulating JWT Header sending
+                console.log("Sending to Backend via JWT:", { newEmail: emailInput.value });
+                
+                localStorage.setItem('email_input', emailInput.value); // update local store
+                alert("Email updated successfully!");
+                emailInput.setAttribute('readonly', true);
+                emailInput.style.borderColor = "#ccc";
+            }
+        });
+
+        
+
+        // delete account logic
+        document.getElementById('delete_account_btn').addEventListener('click', () => {
+            if (confirm("Clear all saved data?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        });
+    });
+
+    //PASSWORD CHANGE LOGIC
+    document.addEventListener('DOMContentLoaded', () => {
+    const pwdArea = document.getElementById('password_change_area');
+    const showPwdBtn = document.getElementById('change_password_btn');
+    const cancelPwdBtn = document.getElementById('cancel_password_btn');
+    const savePwdBtn = document.getElementById('save_password_btn');
+
+    //toggle visibility of password change area
+    showPwdBtn.addEventListener('click', () => {
+        pwdArea.style.display = 'block';
+        showPwdBtn.style.display = 'none'; //hide main btn while editing
+        document.getElementById('password_input').value = ''; // clear
+
+    });
+
+    cancelPwdBtn.addEventListener('click', () => {
+        pwdArea.style.display = 'none';
+        showPwdBtn.style.display = 'block';
+        //clear inputs for security
+        document.querySelectorAll('#password_change_area input').forEach(i => i.value = '');
+    });
+
+    //mock backend logic
+    savePwdBtn.addEventListener('click', () => {
+        const current = document.getElementById('password_input').value;
+        const next = document.getElementById('new_password_input').value;
+        const confirm = document.getElementById('confirm_password_input').value;
+
+        const actualSavedPassword = localStorage.getItem('password_input') || 'user123';
+        //mock current password check
+        if (current !== actualSavedPassword) {
+            alert("Error 403: Current password incorrect.");
+            return;
+        }
+
+        if (next !== confirm || next === "") {
+            alert("New passwords must match and cannot be empty.");
+            return;
+        }
+
+        // simulating JWT Header sending
+        console.log("Sending to Backend via JWT:", { newPass: next });
+        
+        localStorage.setItem('password_input', next); // update local store
+        alert("Password updated successfully!");
+        
+        // close and reset
+        cancelPwdBtn.click(); 
+    });
+});
+
+            </script>
+    </body> 
+</html>
+
+<style>
+
+.navbar {
+        background-color: #f0f0f0;
+        padding: 10px;
+        font-family: 'Arial', sans-serif;
+    }
+
+
+    .navbar a {
+        margin: 0 15px;
+        text-decoration: none;
+        color: #333;
+    }
+
+.title {
+    font-size: 26px;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        margin-top: 20px;
+    }
+
+    .form{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+   
+    main{
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;}
+
+     .description {
+        text-align: center;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        margin-top: 20px;
+     }
+
+     .user-info {
+        margin-top: 20px;
+        font-family: 'Arial', sans-serif;
+        color: #371717;
+        list-style-type: none;
+     }
+
+
+     #change_password_btn, #update_email_btn, #edit_profile_btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #485b49;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-family: 'Arial', sans-serif;
+     }
+
+     #delete_account_btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #c0392b;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-family: 'Arial', sans-serif;
+     }
+
+     #password_input, #username_input, #email_input, #full_name_input, #bio_input, #new_password_input, #confirm_password_input {
+         margin-top: 10px;
+         padding: 5px;
+         border: 1px solid #ccc;
+         border-radius: 5px;
+        margin-bottom: 20px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    input:not([readonly]), textarea:not([readonly]) {
+    background-color: #fff;
+    border: 2px solid #27ae60 !important;
+    outline: none;
+}
+</style>
