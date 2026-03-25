@@ -7,6 +7,9 @@ const router = Router();
 router.post('/signUp', validateSignUp, authController.signUp.bind(authController));
 // Sign In Route
 router.post('/signIn', validateSignIn, authController.signIn.bind(authController));
+// Backwards-compatible alias (client used /auth/login)
+router.post('/login', validateSignIn, authController.signIn.bind(authController));
+
 /* Protected Routes */
 // Will be useful for when we want to implement features that require authentication, such as fetching user profile, updating user details, etc.
 // Example: Get User Profile (requires authentication)

@@ -7,6 +7,7 @@ export class AuthController {
  */
     static async signUp(req, res, next) {
         try {
+            console.log("SIGN UP CALL")
             //  Extract username, email, and password from request body
             const { username, email, password } = req.body;
             // Validate Input
@@ -32,18 +33,19 @@ export class AuthController {
  */
     static async signIn(req, res, next) {
         try {
-            // Extract email (email or username) and password from request body
-            const { email, password } = req.body;
+            // Extract identifier (email or username) and password from request body
+            const { identifier, email, username, password } = req.body;
+            const loginIdentifier = identifier || email || username;
             // Validate Input
-            if (!email || !password) {
+            if (!loginIdentifier || !password) {
                 res.status(400).json({
                     success: false,
-                    message: 'Email and password are required'
+                    message: 'Username/email and password are required'
                 });
                 return;
             }
             // Call the AuthService to handle user authentication
-            const result = await AuthService.signIn(email, password);
+            const result = await AuthService.signIn(loginIdentifier, password);
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
