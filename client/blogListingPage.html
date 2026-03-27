@@ -1,0 +1,193 @@
+<!------------------ HTML ------------------>
+<html>
+    <head>
+        <script src="/components/header.js"></script>
+        <title>Blog list</title>
+    </head>
+    <body>
+        <main class="page">
+            <div class="page-header">
+                <h1 class="page-heading">Health &amp; Lifestyle Blo Posts</h1>
+            </div>
+            <div class="filter-row">
+                <button class="filter-button active">All</button>
+                <button class="filter-button">Health Support</button>
+                <button class="filter-button">Lifestyle</button>
+                <button class="filter-button">Mindfulness</button>
+                <button class="filter-button">Sleep &amp; Recovery</button>
+            </div>
+            <div class="card-grid">
+                <a href="/blogPage.html" class="card">
+                    <div class="card-body">
+                        <span class="card-tag">Health Support</span>
+                        <h2 class="card-title">Lorem ipsum dolor sit amet</h2>
+                        <div class="card-meta">
+                            <div class="card-avatar">MC</div>
+                            <span class="card-author">Melissa Carter</span>
+                            <span class="card-dot">·</span>
+                            <span class="card-date">May 2026</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </main>
+    </body>
+</html>
+
+<!------------------ CSS ------------------>
+<head>
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #faf7f2;
+            color: #3d2b1f;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto 5rem;
+            padding: 3rem 1.5rem 0;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #3d2b1f;
+            margin-bottom: 0.3rem;
+            letter-spacing: -0.02em;
+        }
+
+        .page-sub {
+            font-size: 0.95rem;
+            color: #6b4c3b;
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .filter-button {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            border: 1.5px solid #e8ede9;
+            background: #fff9f3;
+            color: #6b4c3b;
+            cursor: pointer;
+        }
+
+        .filter-button:hover {
+            border-color: #b8d4bb;
+            color: #7a9e7e;
+        }
+
+        .filter-button:active {
+            background: #7a9e7e;
+            border-color: #7a9e7e;
+            color: #fff;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 14px;
+            border: 1px solid rgba(184, 212, 187, 0.3);
+            box-shadow: 0 2px 20px rgba(61,43,31,0.08);
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(61, 43, 31, 0.12);
+        }
+
+        .card-body {
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .card-tag {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: #7a9e7e;
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 5px;
+            margin-bottom: 0.75rem;
+            align-self: flex-start;
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #3d2b1f;
+            line-height: 1.35;
+            margin-bottom: 0.6rem;
+            letter-spacing: -0.01em;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+        
+        .card-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #7a9e7e;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .card-author {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #3d2b1f;
+        }
+
+        .card-dot {
+            font-size: 0.8rem;
+            color: #6b4c3b;
+        }
+
+        .card-date {
+            font-size: 0.8rem;
+            color: #6b4c3b;
+        }
+    </style>
+</head>
