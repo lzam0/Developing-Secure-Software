@@ -46,6 +46,14 @@ export class AuthController {
             }
             // Call the AuthService to handle user authentication
             const result = await AuthService.signIn(loginIdentifier, password);
+
+            // Set JWT as HTTP-only cookie so the browser sends it automatically on future requests
+            res.cookie('token', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000 // 2 hours, matches JWT_EXPIRES_IN default
+            });
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
@@ -62,11 +70,20 @@ export class AuthController {
  * Sign Out the user by clearing the token cookie
  */
     static async signOut(req, res) {
-        // Clear the token cookie
+        // Clear the token cookie off browser
+        res.clearCookie('token');
         res.status(200).json({
             success: true,
             message: 'Logout successful'
         });
+    }
+
+    /**
+     * GET /api/auth/verify
+     * Verify the user is authenticated
+     */
+    static async verify(req, res) {
+        res.status(200).json({ success: true, user: req.user });
     }
 }
 export default AuthController;

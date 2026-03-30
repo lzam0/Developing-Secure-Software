@@ -32,5 +32,6 @@ CREATE TABLE IF NOT EXISTS diary (
 );
 
 -- INSERT TEST USER
+--- PASSWORD IS "123" WITH BCRYPT HASH + PEPPER + SALT_ROUNDS 10
 INSERT INTO users (username, email, password) 
-VALUES ('testuser', 'testuser@example.com', '$2b$10$rmHwvV23/JsZIaUaDKol6ecCCwwZuzNhNdneSpz/yqg8mXxRQz2Du'); -- Password is "123" with bcrypt hash
+VALUES ('testuser', 'testuser@example.com', '$2b$10$jZwxCg8Hd7xOP8ThVzOSo.749KH63fpLPrqCwAUREZKfhFsTtfCVK');
