@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import UserModel from '../models/user.model.js';
 import dotenv from 'dotenv';
+import e from 'express';
 dotenv.config();
 // Validate required environment variables
 if (!process.env.JWT_WEB_TOKEN_SECRET) {
@@ -35,13 +36,22 @@ export class AuthService {
     static async signUp(username, email, password) {
 
         // Check if user already exists
-        const existingUser = await UserModel.findByEmailOrUsername(email) || await UserModel.findByEmailOrUsername(username);
+        // Check if the email is taken OR if the username is taken
+    const existingEmail = await UserModel.findByEmail(email);
+    const existingUsername = await UserModel.findByUsername(username);
 
-        // If user exists, throw an error
-        if (existingUser) {
-            const err = new Error('User already exists');
-            err.statusCode = 409;
-            throw err;
+        // ANTI-ACCOUNT ENUMERATION: If user exists, dont throw error, hide it
+        if (existingEmail || existingUsername) {
+            //fake hash so the response time matches real
+            await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
+
+            //returning a generic error message - what a successful registration would look like, to prevent user enumeration
+
+            return{
+                message: 'A verification email has been sent to your email address. Please check your inbox and follow the instructions to complete your registration.',
+                status: 'pending'
+            };
+
         }
 
         // Hash the password with salt and pepper
