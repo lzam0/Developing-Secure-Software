@@ -44,8 +44,22 @@ export class AuthService {
             throw err;
         }
 
+        // Check if the email is valid
+        if (!this.validateEmail(email)) {
+            const err = new Error('Invalid email format');
+            err.statusCode = 400;
+            throw err;
+        }
+
+        // Check if the password is valid
+        if (!this.validatePassword(password)) {
+            const err = new Error('Password does not meet requirements');
+            err.statusCode = 400;
+            throw err;
+        }
+
         // Hash the password with salt and pepper
-        const hashedPassword = await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
+        const hashedPassword = await this.hashPassword(password);
         
         // Create the user
         const newUser = await UserModel.create(username, email, hashedPassword);
@@ -78,7 +92,7 @@ export class AuthService {
         }
 
         // Compare the provided password with the stored hashed password
-        const isPasswordValid = await bcrypt.compare(password + PEPPER, user.password);
+        const isPasswordValid = await this.verifyPassword(password, user.password);
         if (!isPasswordValid) {
             const err = new Error('Invalid credentials');
             err.statusCode = 401;
@@ -97,6 +111,29 @@ export class AuthService {
             },
             token
         };
+    }
+
+    // Dylan implement regex into here
+    static validateEmail(email){
+        /* Validate Email Constraints
+        * 
+        */
+        return null;
+    }
+
+    static validatePassword(password){
+        /* Validate Password Constraints
+        * 
+        */
+        return null;
+    }
+
+    static async hashPassword(password) {
+        return await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
+    }
+
+    static async verifyPassword(password, hash) {
+        return bcrypt.compare(password + PEPPER, hash);
     }
 }
 export default AuthService;

@@ -1,2 +1,3 @@
-const chai = require("chai");
-const expect = chai.expect;
+import { expect } from "chai";
+
+import authService from "../../service/auth.service.js";

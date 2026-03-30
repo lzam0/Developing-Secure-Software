@@ -2,11 +2,24 @@
   "type": "module",
   "name": "backend",
   "version": "1.0.0",
-  "description": "JavaScript-only backend for 'Developing Secure Software' project",
+  "description": "Developing Secure Software project",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "db": "docker-compose -f ../docker-compose.yml down -v && docker-compose -f ../docker-compose.yml up --build -d"
+    "db": "docker-compose -f ../docker-compose.yml down -v && docker-compose -f ../docker-compose.yml up --build -d",
+
+    "test": "mocha 'test/**/*.test.js' --recursive --timeout 5000",
+    "test:unit": "mocha 'test/unit/**/*.test.js' --timeout 5000",
+    "test:integration": "mocha 'test/integration/**/*.test.js' --timeout 10000",
+    "test:security": "mocha 'test/security/**/*.test.js' --timeout 5000",
+    "test:watch": "mocha 'test/**/*.test.js' --recursive --watch",
+    "test:coverage": "nyc mocha 'test/**/*.test.js' --recursive",
+    "test:auth": "mocha test/unit/auth.test.js --timeout 5000",
+    "test:user": "mocha test/unit/user.test.js --timeout 5000",
+    "test:api": "mocha test/integration/api.test.js --timeout 10000",
+    "test:login-security": "mocha test/security/login.security.test.js --timeout 5000",
+    "test:jwt-security": "mocha test/security/jwt.security.test.js --timeout 5000",
+    "test:validation-security": "mocha test/security/validation.security.test.js --timeout 5000"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
