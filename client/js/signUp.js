@@ -3,13 +3,32 @@
 document.getElementById("signup_form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const username = document.getElementById("username_input").value;
-    const email = document.getElementById("email_input").value;
+    const username = document.getElementById("username_input").value.trim();
+    const email = document.getElementById("email_input").value.trim();
+    const confirmEmail = document.getElementById("confirm_email_input").value.trim();
     const password = document.getElementById("password_input").value;
     const confirmPassword = document.getElementById("confirm_password_input").value;
 
+    const errorEl = document.getElementById("form_error");
+    const showError = (msg) => {
+        errorEl.textContent = msg;
+        errorEl.style.display = "block";
+    };
+    errorEl.style.display = "none";
 
-    // Basic client-side validation - DYLAN IMPLEMENT THIS
+    // Client-side validation
+    if (!username || !email || !confirmEmail || !password || !confirmPassword) {
+        showError("All fields are required.");
+        return;
+    }
+    if (email !== confirmEmail) {
+        showError("Email addresses do not match.");
+        return;
+    }
+    if (password !== confirmPassword) {
+        showError("Passwords do not match.");
+        return;
+    }
 
     // Send a POST request to the backend API for registration
     try {
@@ -23,7 +42,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
             credentials: "include",
             
             // Send the username, email, and password as JSON in the request body
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username, email, password, confirmPassword })
         });
 
         if(response.ok) {
@@ -33,12 +52,11 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
         else {
             // If registration fails, show an error message
             const errorData = await response.json();
-            alert(`Registration failed: ${errorData.message}`);
+            showError(`Registration failed: ${errorData.message}`);
         }
     } catch (error) {
         // Error Message
         console.error("Error during registration:", error?.message || String(error));
-        alert("An error occurred during registration. Please try again.");
-        return;
+        showError("An error occurred during registration. Please try again.");
     }
 });

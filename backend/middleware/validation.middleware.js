@@ -2,8 +2,17 @@
  * Validate registration input
  */
 export const validateSignUp = (req, res, next) => {
-    // Extract username, email, and password from request body
-    const { username, email, password } = req.body;
+    const { username, email, password, confirmPassword } = req.body;
+
+    // Check if all fields are present
+    if (!username || !email || !password) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // DYLAN - DO THIS
+    // Implement password validation
+    // Implment email validation with regex 
+
     next();
 };
 /**
