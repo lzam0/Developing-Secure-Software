@@ -1,17 +1,31 @@
 import { Router } from 'express';
 import authController from '../controllers/auth.controller.js';
 import { validateSignUp, validateSignIn } from '../middleware/validation.middleware.js';
+import rateLimit from 'express-rate-limit';
 const router = Router();
+
+//auth limiting
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // limit each IP to 10 requests per windowMs
+    message: 'Too many authentication attempts from your IP, please try again after 15 minutes'
+});
+
+
 /* Public Routes */
-// Sign Up Route
-router.post('/signUp', validateSignUp, authController.signUp.bind(authController));
-// Sign In Route
-router.post('/signIn', validateSignIn, authController.signIn.bind(authController));
-// Backwards-compatible alias (client used /auth/login)
-router.post('/login', validateSignIn, authController.signIn.bind(authController));
+// apply the rate limiting middleware to the sign in and sign up routes
+router.post('/signUp', authLimiter, validateSignUp, authController.signUp.bind(authController));
+router.post('/signIn', authLimiter, validateSignIn, authController.signIn.bind(authController));
+router.post('/login', authLimiter, validateSignIn, authController.signIn.bind(authController));
+
+
+
+
+
 
 /* Protected Routes */
 // Will be useful for when we want to implement features that require authentication, such as fetching user profile, updating user details, etc.
 // Example: Get User Profile (requires authentication)
 // router.get('/profile', authenticateToken, authController.getProfile);
 export default router;
+

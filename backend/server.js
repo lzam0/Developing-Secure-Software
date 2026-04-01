@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+import rateLimit from 'express-rate-limit';
 
 // const pool = require("pool");
 const __filename = fileURLToPath(import.meta.url);
@@ -22,6 +23,14 @@ app.use(cors({
     origin: process.env.FRONTEND_URL, // Your frontend URL
     credentials: true // Allow cookies
 }));
+
+// Rate Limiting Middleware - apply to all requests
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+});
+
+app.use(globalLimiter); // applies to all routes
 
 // Parse JSON bodies and cookies
 app.use(express.json());

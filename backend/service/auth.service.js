@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import UserModel from '../models/user.model.js';
 import dotenv from 'dotenv';
 import {randomInt} from 'crypto';
+import rateLimit from 'express-rate-limit';
 dotenv.config();
 // Validate required environment variables
 if (!process.env.JWT_WEB_TOKEN_SECRET) {
