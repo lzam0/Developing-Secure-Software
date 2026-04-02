@@ -7,7 +7,6 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "db": "docker-compose -f ../docker-compose.yml down -v && docker-compose -f ../docker-compose.yml up --build -d",
-
     "test": "mocha 'test/**/*.test.js' --recursive --timeout 5000",
     "test:unit": "mocha 'test/unit/**/*.test.js' --timeout 5000",
     "test:integration": "mocha 'test/integration/**/*.test.js' --timeout 10000",
@@ -19,6 +18,7 @@
     "test:api": "mocha test/integration/api.test.js --timeout 10000",
     "test:login-security": "mocha test/security/login.security.test.js --timeout 5000",
     "test:jwt-security": "mocha test/security/jwt.security.test.js --timeout 5000",
+    "test:cookie": "mocha test/security/cookie.security.test.js --timeout 5000",
     "test:validation-security": "mocha test/security/validation.security.test.js --timeout 5000"
   },
   "dependencies": {
@@ -34,6 +34,8 @@
     "pg": "^8.20.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "sinon": "^21.0.3",
+    "supertest": "^7.2.2"
   }
 }
