@@ -3,9 +3,9 @@
 document.getElementById("signup_form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const username = document.getElementById("username_input").value.trim();
-    const email = document.getElementById("email_input").value.trim();
-    const confirmEmail = document.getElementById("confirm_email_input").value.trim();
+    const messageDisplay = document.getElementById("message_display");
+    const username = document.getElementById("username_input").value;
+    const email = document.getElementById("email_input").value;
     const password = document.getElementById("password_input").value;
     const confirmPassword = document.getElementById("confirm_password_input").value;
 
@@ -45,18 +45,30 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
             body: JSON.stringify({ username, email, password, confirmPassword })
         });
 
+        const data = await response.json();
+
         if(response.ok) {
             // If registration is successful, redirect to the login page
-            window.location.href = "login.html";
+            
+            // show the generic success message
+            messageDisplay.textContent = data.message; 
+            messageDisplay.style.display = "block";
+            messageDisplay.style.backgroundColor = "#d4edda";
+            // clear the form so they don't submit twice
+            document.getElementById("signup_form").reset();
+
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 4000);
         }
-        else {
-            // If registration fails, show an error message
-            const errorData = await response.json();
-            showError(`Registration failed: ${errorData.message}`);
+     else {
+            // this only triggers for ACTUAL errors (like server down or invalid email format)
+            messageDisplay.textContent = data.message || "An error occurred.";
+            messageDisplay.style.display = "block";
+            messageDisplay.style.backgroundColor = "#f8d7da"; // Red
         }
     } catch (error) {
-        // Error Message
-        console.error("Error during registration:", error?.message || String(error));
-        showError("An error occurred during registration. Please try again.");
+        console.error("Error:", error);
+        alert("An error occurred during registration. Please try again.");
     }
 });
