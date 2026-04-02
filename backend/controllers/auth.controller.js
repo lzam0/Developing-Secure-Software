@@ -18,7 +18,7 @@ export class AuthController {
             const result = await AuthService.signUp(username, email, password);
             res.status(201).json({
                 success: true,
-                message: 'User registered successfully',
+                message: result.message,
                 data: result
             });
         }
