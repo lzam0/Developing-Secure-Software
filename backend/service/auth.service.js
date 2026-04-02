@@ -118,6 +118,13 @@ export class AuthService {
         /* Validate Email Constraints
         * 
         */
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+        if (!emailRegex.test(email)) {
+            return false;
+        } else {
+            return true;
+        }
         return null;
     }
 
@@ -125,6 +132,14 @@ export class AuthService {
         /* Validate Password Constraints
         * 
         */
+
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d){8,72}$/;
+
+        if (!passwordRegex.test(password)) {
+            return false;
+        } else {
+            return true;
+        }
         return null;
     }
 

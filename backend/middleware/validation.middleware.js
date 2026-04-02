@@ -12,6 +12,16 @@ export const validateSignUp = (req, res, next) => {
     // DYLAN - DO THIS
     // Implement password validation
     // Implment email validation with regex 
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d){8,72}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({ message: "Password must be 8-72 characters long and include at least one letter and one number" });
+    }
+
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+    }
 
     next();
 };
