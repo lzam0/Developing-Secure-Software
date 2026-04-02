@@ -24,8 +24,7 @@ router.post('/login', authLimiter, validateSignIn, authController.signIn.bind(au
 
 
 /* Protected Routes */
-// Will be useful for when we want to implement features that require authentication, such as fetching user profile, updating user details, etc.
-// Example: Get User Profile (requires authentication)
-// router.get('/profile', authenticateToken, authController.getProfile);
+// Verify token validity — used by the frontend auth guard on page load
+router.get('/verify', authenticateToken, authController.verify.bind(authController));
 export default router;
 

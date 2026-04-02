@@ -31,12 +31,15 @@
             <label for="email_input">Email:</label>
             <input type="email" id="email_input" name="email_input" placeholder="Please enter your email...">
 
+            <label for="confirm_email_input">Confirm Email:</label>
+            <input type="email" id="confirm_email_input" name="confirm_email_input" placeholder="Please confirm your email...">
 
             <label for="password_input">Password:</label>
             <input type="password" id="password_input" name="password_input" placeholder="Please enter your password...">
             <label for="confirm_password_input">Confirm Password:</label>
             <input type="password" id="confirm_password_input" name="confirm_password_input" placeholder="Please confirm your password...">
 
+            <p id="form_error" style="color: red; font-size: 13px; margin-bottom: 10px; display: none;"></p>
             <button id="login_btn" type="submit">Sign Up</button>
         </form>
             <div>
@@ -110,7 +113,7 @@
     }
 
 
-    #password_input, #username_input, #email_input, #confirm_password_input {
+    #password_input, #username_input, #email_input, #confirm_email_input, #confirm_password_input {
         margin-bottom: 20px;
         padding: 5px;
         border: 1px solid #ccc;
