@@ -31,6 +31,18 @@ CREATE TABLE IF NOT EXISTS diary (
     author_id INTEGER REFERENCES users(userid) ON DELETE CASCADE
 );
 
+-- table for invalid or logged-out session tokens 
+CREATE TABLE IF NOT EXISTS revoked_tokens (
+    id SERIAL PRIMARY KEY, 
+    jti TEXT NOT NULL UNIQUE, -- unique serial number from jwt
+    userid INTEGER REFERENCES users(userid) ON DELETE CASCADE, -- link the token to a specific user
+    revoked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL -- expiry date from the JWT 
+);
+
+CREATE INDEX IF NOT EXISTS idx_revoked_tokens_jti ON revoked_tokens(jti);
+CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires ON revoked_tokens(expires_at);
+
 -- INSERT TEST USER
 --- PASSWORD IS "123" WITH BCRYPT HASH + PEPPER + SALT_ROUNDS 10
 INSERT INTO users (username, email, password) 
