@@ -1,0 +1,22 @@
+ .navbar {
+        background-color: #f0f0f0;
+        padding: 10px;
+        font-family: 'Arial', sans-serif;
+    }
+
+
+    .navbar a {
+        margin: 0 15px;
+        text-decoration: none;
+        color: #333;
+    }
+
+    .current {
+        font-weight: bold;
+        background-color: rgb(189, 202, 198);
+    }
+
+   
+    .navbar a:hover {
+        color: #4CAF50;
+    }
