@@ -23,7 +23,7 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
 
         if(response.ok) {
             // If login is successful, redirect
-            window.location.href = "blogListingPage.html";
+            window.location.href = "2fa.html";
         } else {
             // If login fails, show an error message
             const errorData = await response.json();

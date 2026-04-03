@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import rateLimit from 'express-rate-limit';
+import session from "express-session";
 
 // const pool = require("pool");
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +36,11 @@ app.use(globalLimiter); // applies to all routes
 // Parse JSON bodies and cookies
 app.use(express.json());
 app.use(cookieParser());
+app.use(session({
+    secret: process.env.SESSION_SECRET || "dev_secret",
+    resave: false,
+    saveUninitialized: true
+}));
 app.use(express.static(path.join(__dirname, "../client")));
 
 // Routes

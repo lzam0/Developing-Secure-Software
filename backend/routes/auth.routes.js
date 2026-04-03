@@ -17,6 +17,7 @@ const authLimiter = rateLimit({
 router.post('/signUp', authLimiter, validateSignUp, authController.signUp.bind(authController));
 router.post('/signIn', authLimiter, validateSignIn, authController.signIn.bind(authController));
 router.post('/login', authLimiter, validateSignIn, authController.signIn.bind(authController));
+router.post('/verify-otp', authController.verifyOtp.bind(authController));
 
 
 /* Protected Routes */
