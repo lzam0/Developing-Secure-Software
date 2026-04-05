@@ -1,15 +1,13 @@
 <html>
     <head>
+        <title>Health Diary</title>
+        <meta charset="UTF-8">
         <link rel="stylesheet" href="/styles.css">
-        <title>Health and Lifestyle Blog</title>
         <script src="/components/header.js"></script>
+        <script src="/components/navbar.js" defer></script>
     </head>
     <body>
-       <nav class="navbar">
-    <a href="/pages/index.html">Home</a>
-    <a href="/pages/healthdiary.html" class="current">Diary</a>
-    <a href="/pages/blogs.html">Blogs</a>
-</nav>
+        <div id="header"></div>
 
 
     <h1 class="title">Health Diary</h1>
@@ -26,23 +24,6 @@
 </html>
 
 <style>
-
-    .navbar {
-    background-color: #fff;
-    padding: 1rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: center;
-}
-
-.navbar a {
-    margin: 0 20px;
-    text-decoration: none;
-    color: #666;
-    font-weight: 500;
-}
-
-.navbar a.current { color: #4CAF50; border-bottom: 2px solid #4CAF50; }
 
 
     .btn {
@@ -75,7 +56,4 @@
     }
 
 
-    .navbar{
-        font-family: 'Arial', sans-serif;
-    }
 </style>

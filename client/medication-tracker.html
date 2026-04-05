@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
     <head>
+         <link rel="stylesheet" href="/styles.css">
         <title>Health and Lifestyle Blog - Medication Tracker</title>
         <meta charset="utf-8">
+        <script src="/components/header.js"></script>
+        <script src="/components/navbar.js" defer></script>
        
     </head>
+     <div id="header"></div>
     <body>
-<nav class="navbar">
-    <a href="/index.html">Home</a>
-    <a href="/healthdiary.html" class="current">Diary</a>
-    <a href="/blogListingPage.html">Blogs</a>
-</nav>
+
+       
+
 
 <h1 class="title">Medication/Supplement Tracker</h1>
 
@@ -139,23 +141,6 @@ body {
         font-family: 'Arial', sans-serif;
         color: #333;
     }
-
-.navbar {
-    background-color: #fff;
-    padding: 1rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: center;
-}
-
-.navbar a {
-    margin: 0 20px;
-    text-decoration: none;
-    color: #666;
-    font-weight: 500;
-}
-
-.navbar a.current { color: #4CAF50; border-bottom: 2px solid #4CAF50; }
 
 
 .table-container {
