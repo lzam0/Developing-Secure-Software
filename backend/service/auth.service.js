@@ -35,6 +35,7 @@ const PEPPER = process.env.PEPPER;
 // }
 
 // convert a duration string into milliseconds
+// needed for the timestamp in the revoked_tokens table to know when a token is expired
 function parseDurationMs(duration) { // calculate the expires_at timestamp stored in the datavase + revoked jti
     const units = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }; // milliseconds per unit (minute, hour, day)
     const match = String(duration).match(/^(\d+)([smhd])$/); // regex - ^(\d+) (number (2)), ([smhd])$ (unit (h)) 
@@ -160,11 +161,16 @@ export class AuthService {
         };
     }
 
+    // blacklist of ids so tokens cannot be used again 
     static async revokeToken(jti, userID, expiresAt) {
+        // add the tokens unique id (jti) to the revoked_tokens table 
         await pool.query(
             `INSERT INTO revoked_tokens (jti, userid, expires_at)
              VALUES ($1, $2, $3)
              ON CONFLICT (jti) DO NOTHING`,
+             // $1 - unique serial number (jti) of the token 
+             // $2 - id of the user 
+             // $3 - token expire time 
              [jti, userID, expiresAt]
         );
     }
