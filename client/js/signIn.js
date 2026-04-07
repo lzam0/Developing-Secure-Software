@@ -22,8 +22,8 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
         });
 
         if(response.ok) {
-            // If login is successful, redirect to the dashboard
-            window.location.href = "dashboard.html";
+            // If login is successful, redirect
+            window.location.href = "blogListingPage.html";
         } else {
             // If login fails, show an error message
             const errorData = await response.json();

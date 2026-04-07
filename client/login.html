@@ -1,24 +1,16 @@
 <!DOCTYPE html>
 <html>
     <head>
+         <link rel="stylesheet" href="/styles.css">
         <title>Health and Lifestyle Blog Login</title>
         <meta charset="utf-8">
         <script src="js/signIn.js" defer></script>
+        <script src="/components/header.js"></script>
+        <script src="/components/navbar.js" defer></script>
     </head>
     <body>
-        <ul>
-           <nav class="navbar">
-            <ul>
-            <a href="index.html">Home</a>
-
-            <a class="current" href="login.html">Login</a>
-
-            <a href="signup.html">Sign Up</a>
-            </ul>
-</nav>
-        <header>
-            <h1 class="title">Welcome to Health and Lifestyle Blog!</h1>
-        </header>
+        
+        <div id="header"></div>
 
         <main>
         <p class="description">Please enter your username and password to continue.</p>
@@ -84,18 +76,6 @@
 
     }
 
-    .navbar {
-        background-color: #f0f0f0;
-        padding: 10px;
-        font-family: 'Arial', sans-serif;
-    }
-
-
-    .navbar a {
-        margin: 0 15px;
-        text-decoration: none;
-        color: #333;
-    }
 
 
     #password_input, #username_input {
