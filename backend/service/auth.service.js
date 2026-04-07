@@ -113,7 +113,7 @@ export class AuthService {
         };
     }
 
-    // Dylan implement regex into here
+    
     static validateEmail(email){
         /* Validate Email Constraints
         * 
@@ -125,7 +125,7 @@ export class AuthService {
         } else {
             return true;
         }
-        return null;
+        
     }
 
     static validatePassword(password){
@@ -140,7 +140,7 @@ export class AuthService {
         } else {
             return true;
         }
-        return null;
+        
     }
 
     static async hashPassword(password) {

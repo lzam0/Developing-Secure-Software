@@ -31,6 +31,21 @@ describe("Login Security", () => {
             const result = authService.validateEmail("valid@example.com");
             expect(result).to.equal(true);
         });
+
+        it ("should reject empty email", () => {
+            const result = authService.validateEmail("");
+            expect(result).to.equal(false);
+        })
+
+        it ("should reject null email",() => {
+            const result = authService.validateEmail(null);
+            expect(result).to.equal(false);
+        })
+
+        it ("should reject undefined email", () => {
+            const result = authService.validateEmail(undefined);
+            expect(result).to.equal(false);
+        })
  
         // Password Validation
         it("should reject empty password", () => {
@@ -67,6 +82,19 @@ describe("Login Security", () => {
             const result = authService.validatePassword("StrongPass123!");
             expect(result).to.equal(true);
         });
+
+        it ("should reject password longer than maximum length", () => {
+            const longPassword = "A".repeat(73) + "1a!";
+            const result = authService.validatePassword(longPassword);
+            expect(result).to.equal(false);
+        })
+
+        it ("should accept password at minimum length", () => {
+            const min_pass = "A1a!A1a!"
+            const result = authService.validatePassword(min_pass);
+            expect(result).to.equal(true);
+        })
+
     });
 
     /*
@@ -102,5 +130,10 @@ describe("Login Security", () => {
             expect(isValid).to.equal(false);
         });
     });
+
+    /*
+    * Security Prevention Testing
+    * Test out account enumeration, SQL injection and brute force prevention?
+    */
 
 });
