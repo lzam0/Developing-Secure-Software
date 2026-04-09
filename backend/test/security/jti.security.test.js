@@ -43,7 +43,7 @@ describe('JTI blacklist', () => {
         // sign in to generate a session to get a valid token
         const loginRes = await request(app)
             .post('/auth/signin')
-            .send({ identifier: 'testuser', password: 'Password123'});
+            .send({ identifier: 'testuser', password: 'Password123 '});
 
         // extract the jwt from the set-cookie header
         const cookie = loginRes.headers['set-cookie'][0].split(';')[0];
