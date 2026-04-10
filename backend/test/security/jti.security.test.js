@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createTestApp } from '../helpers/createTestApp.js';
 import { validToken, TEST_SECRET } from '../helpers/tokenFactory.js';
 import { AuthService } from '../../service/auth.service.js';
+import jwt from 'jsonwebtoken';
 
 // npx mocha test/security/jti.security.test.js
 
@@ -10,7 +11,7 @@ const app = createTestApp({ secret: TEST_SECRET });
 
 describe('JTI blacklist', () => {
     // valid token with a unique jti is accepted 
-    // blacklist check isnt blocking legitmate users 
+    // blacklist check to ensure it isnt blocking legitmate users to the blog
     it('should allow a token if its jti is not in the blacklist', async () => {
         const token = validToken({ id: 1, username: 'testuser', jti: 'fresh-token-001' });
         
@@ -58,9 +59,38 @@ describe('JTI blacklist', () => {
         const replayRes = await request(app)
             .get('/api/protected')
             .set('Cookie', cookie);
-        // expect a 401 unauthorised as the jti should be in the blacklist 
+        // expect a 401 unauthorised as the jti should be in the blacklist
         expect(replayRes.status).to.equal(401);
         expect(replayRes.body.message).to.equal('Token has been revoked');
+    });
+
+    // token requires a jti for all protected requests 
+    it('should reject a token that is missing a jti', async () => {
+        // jwt payload without a jti 
+        const token = jwt.sign({ id: 1, username: 'testuser' }, TEST_SECRET, { expiresIn: '2h' });
+
+        const res = await request(app) 
+            .get('/api/protected')
+            .set('Cookie', `token=${token}`);
+        // expect a 401 unauthorised 
+        expect(res.status).to.equal(401);
+        expect(res.body.message).to.contain('Invalid token: missing jti');
+    });
+
+    // a jti should be blocked even with a different user id 
+    // prevent attackers from reusing a jti on a different account
+    it('should reject a blacklisted jti even with a different userid', async () => {
+        const jti = 'blacklisted-jti-abc';
+        // authservice to manually add the jti to the revoked list for user 1 
+        await AuthService.revokeToken(jti, 1, new Date(Date.now() + 3600000));
+        // malicious token using the revoked jti but under user 18
+        const maliciousToken = validToken({ id: 18, username: 'attacker', jti: jti });
+
+        const res = await request(app)
+            .get('/api/protected')
+            .set('Cookie', `token=${maliciousToken}`);
+        // expect a 401 unauthorised 
+        expect(res.status).to.equal(401);
     });
 });
 

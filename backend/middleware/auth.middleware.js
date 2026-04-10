@@ -48,31 +48,26 @@ export const authenticateToken = async (req, res, next) => {
         return;
     }
     // checking the jti with the revoked_tokens table 
-    if (decoded.jti) {
-        try {
-            // query the database to see if this specific jti already exists in the revoked_tokes table 
-            const { rows } = await pool.query(
-                'SELECT 1 FROM revoked_tokens WHERE jti = $1 LIMIT 1',
-                [decoded.jti]
-            );
-            // if jti is found in the database (the token was revoked (user logged out))
-            if (rows.length > 0) {
-                console.log('Revoked token attempted use, jti:', decoded.jti);
-                // error 401 (authentication)
-                res.status(401).json({
-                    success: false, 
-                    message: 'Token has been revoked'
-                });
-                return;
-            }
-        } catch (dbErr) {
-            console.error('Blacklist check failed:', dbErr.message);
-            res.status(500).json({
-                success: false,
-                message: 'Authentication error'
-            });
+    if (!decoded.jti) {
+        return res.status(401).json({ success: false, message: 'Invalid token: missing jti' });
+    }
+    try {
+        // query the database to see if this specific jti already exists in the revoked_tokes table 
+        const { rows } = await pool.query(
+            'SELECT 1 FROM revoked_tokens WHERE jti = $1 LIMIT 1',
+            [decoded.jti]
+        );
+        // if jti is found in the database (the token was revoked (user logged out))
+        if (rows.length > 0) {
+            console.log('Revoked token attempted use, jti:', decoded.jti);
+            // error 401 (authentication)
+            res.status(401).json({ success: false, message: 'Token has been revoked' });
             return;
         }
+    } catch (dbErr) {
+        console.error('Blacklist check failed:', dbErr.message);
+        res.status(500).json({ success: false, message: 'Authentication error' });
+        return;
     }
     req.user = decoded;
     next();
