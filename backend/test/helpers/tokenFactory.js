@@ -4,8 +4,13 @@ export const TEST_SECRET = 'test-secret-for-testing-only';
 export const WRONG_SECRET = 'attacker-controlled-secret-xyz';
 
 /** Correctly signed token using the test secret. */
+// export function validToken(payload = { id: 1, username: 'testuser' }, options = {}) {
+//     return jwt.sign(payload, TEST_SECRET, { expiresIn: '2h', ...options });
+// }
+
 export function validToken(payload = { id: 1, username: 'testuser' }, options = {}) {
-    return jwt.sign(payload, TEST_SECRET, { expiresIn: '2h', ...options });
+    const finalPayload = { jti: 'test-jti-123', ...payload };
+    return jwt.sign(finalPayload, TEST_SECRET, { expiresIn: '2h', ...options });
 }
 
 /** Token signed with an attacker-controlled secret — simulates stolen/forged token. */
