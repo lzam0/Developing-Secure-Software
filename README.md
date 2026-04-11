@@ -166,7 +166,6 @@ Authentication is enforced client-side via `client/js/verify.js` (defines `verif
 
 | Page | File |
 |------|------|
-| Dashboard | `client/dashboard.html` |
 | My Account | `client/account.html` |
 | Health Metrics Tracker | `client/health-metrics-tracker.html` |
 | Health Diary | `client/healthdiary.html` |
@@ -180,7 +179,7 @@ Unauthenticated users who navigate to any of these pages are automatically redir
 
 | Page | File | Notes |
 |------|------|-------|
-| Home | `client/index.html` | Redirects to `/dashboard.html` if already logged in |
+| Home | `client/index.html` | Redirects to `/blogListingPage.html` if already logged in |
 | Login | `client/login.html` | |
 | Sign Up | `client/signup.html` | |
 | Two-Factor Auth | `client/2fa.html` | Shown mid-login flow before session is established |
