@@ -6,9 +6,9 @@ import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+import { authenticateToken } from "./middleware/auth.middleware.js";
 import rateLimit from 'express-rate-limit';
 
-// const pool = require("pool");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -17,11 +17,14 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
+// Parse cookies and JSON before any middleware that reads them
+app.use(cookieParser());
+app.use(express.json());
 
-// Middleware
+// CORS (Cross-Origin Resource Sharing) - allow requests from the frontend
 app.use(cors({
-    origin: process.env.FRONTEND_URL, // Your frontend URL
-    credentials: true // Allow cookies
+    origin: process.env.FRONTEND_URL,
+    credentials: true
 }));
 
 // Rate Limiting Middleware - apply to all requests
@@ -29,24 +32,34 @@ const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
 });
+app.use(globalLimiter);
 
-app.use(globalLimiter); // applies to all routes
+// Auth-gated static routes — must come before express.static
+const protectedPages = [
+    '/payment.html',
+    '/account.html',
+    '/newBlog.html',
+    '/blogListingPage.html',
+    '/post.html',
+    '/profile.html',
+    '/health-metrics-tracker.html',
+    '/healthdiary.html',
+    '/medication-tracker.html',
+];
+app.use(protectedPages, authenticateToken, (res, req, next) => next());
 
-// Parse JSON bodies and cookies
-app.use(express.json());
-app.use(cookieParser());
+// Single static file handler
 app.use(express.static(path.join(__dirname, "../client")));
 
-// Routes
+// API Routes
 app.use("/auth", authRoutes);
 
-// Error Handler - should be after all routes
+// Error Handler - must be last
 app.use(errorHandler);
 
 const PORT = process.env.PORT;
-const resolvedPort = PORT || 5000;
 
 // Running on PORT http://localhost:5000
-app.listen(resolvedPort, () => {
-    console.log(`Server running on port http://localhost:${resolvedPort}`);
+app.listen(PORT, () => {
+    console.log(`Server running on port http://localhost:${PORT}`);
 });

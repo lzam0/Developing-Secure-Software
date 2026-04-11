@@ -32,8 +32,8 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
 
     // Send a POST request to the backend API for registration
     try {
-        const API_BASE = window.location.origin === "null" ? "http://localhost:5000" : "";
-        const response = await fetch(`${API_BASE}/auth/signUp`, {
+        const BACKEND_URL = "http://localhost:5000";
+        const response = await fetch(`${BACKEND_URL}/auth/signUp`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
