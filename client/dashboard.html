@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <!-- Auth guard must run first — redirects to login if no valid session -->
+    <!-- verify.js must run first — defines verifyAuth() used by auth-guard.js and header.js -->
+    <script src="/js/verify.js"></script>
+    <!-- Auth guard must run second — redirects to login if no valid session -->
     <script src="/js/auth-guard.js"></script>
     <link rel="stylesheet" href="/styles.css">
         <script src="/components/header.js"></script>
