@@ -39,14 +39,13 @@ const protectedPages = [
     '/payment.html',
     '/account.html',
     '/newBlog.html',
-    '/blogListingPage.html',
     '/post.html',
     '/profile.html',
     '/health-metrics-tracker.html',
     '/healthdiary.html',
     '/medication-tracker.html',
 ];
-app.use(protectedPages, authenticateToken, (res, req, next) => next());
+app.use(protectedPages, authenticateToken, (_req, _res, next) => next());
 
 // Single static file handler
 app.use(express.static(path.join(__dirname, "../client")));

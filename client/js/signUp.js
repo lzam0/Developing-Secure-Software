@@ -32,7 +32,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
 
     // Send a POST request to the backend API for registration
     try {
-        const BACKEND_URL = "http://localhost:5000";
+        const BACKEND_URL = "http://localhost:8000";
         const response = await fetch(`${BACKEND_URL}/auth/signUp`, {
             method: "POST",
             headers: {
