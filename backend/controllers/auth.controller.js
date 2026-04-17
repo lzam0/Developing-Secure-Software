@@ -5,28 +5,50 @@ export class AuthController {
  * POST /api/auth/signup
  * Sign Up a new user
  */
-    static async signUp(req, res, next) {
-        try {
-            console.log("SIGN UP CALL")
-            //  Extract username, email, and password from request body
-            const { username, email, password } = req.body;
-            // Validate Input
-            if (!username || !email || !password) {
-                return res.status(400).json({ message: "All fields are required" });
-            }
-            // Call the AuthService to handle user registration
-            const result = await AuthService.signUp(username, email, password);
-            res.status(201).json({
-                success: true,
-                message: result.message,
-                data: result
+  static async signUp(req, res, next) {
+    try {
+        console.log("SIGN UP CALL")
+        
+        const { username, email, password, captchaToken } = req.body;
+
+        // Validate Input
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        if (!captchaToken) {
+            return res.status(400).json({ message: "Security check missing. Please refresh." });
+        }
+
+        const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
+
+        // Verify with Google
+        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+        const recaptchaData = await recaptchaRes.json();
+
+        // Check Google's score
+        if (!recaptchaData.success || recaptchaData.score < 0.5) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Security check failed. Automated requests are not allowed." 
             });
         }
-        catch (error) {
-            // Pass error to error handling middleware
-            next(error);
-        }
+        console.log("Recaptcha Data from Google:", recaptchaData);
+
+        // If the reCAPTCHA passed, call the AuthService to handle user registration
+        const result = await AuthService.signUp(username, email, password);
+        
+        res.status(201).json({
+            success: true,
+            message: result.message,
+            data: result
+        });
     }
+    catch (error) {
+        next(error);
+    }
+}
     /**
  * POST /api/auth/signin
  * Sign In an existing user
