@@ -6,6 +6,9 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
     const username = document.getElementById("username_input").value;
     const password = document.getElementById("password_input").value;
 
+    grecaptcha.execute('6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb', {action: 'login'})
+  .then(async (token) => {
+      
     // Send a POST request to the backend API for authentication
     try {
         const API_BASE = window.location.origin === "null" ? "http://localhost:5000" : "";
@@ -18,7 +21,7 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
             credentials: "include",
 
             // Send the username and password as JSON in the request body
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, captchaToken: token })
         });
 
         if(response.ok) {
@@ -36,6 +39,7 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
         alert("An error occurred during login. Please try again.");
         return;
     }
+});
 });
 
 /* To ensure that users cannot use network phising tools to steal credentials, we can implement the following measures:

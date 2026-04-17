@@ -14,7 +14,7 @@ export class AuthController {
   static async signUp(req, res, next) {
     try {
         console.log("SIGN UP CALL")
-        
+
         const { username, email, password, captchaToken } = req.body;
 
         // Validate Input
@@ -62,7 +62,7 @@ export class AuthController {
     static async signIn(req, res, next) {
         try {
             // Extract identifier (email or username) and password from request body
-            const { identifier, email, username, password } = req.body;
+            const { identifier, username, email, password, captchaToken } = req.body;
             const loginIdentifier = identifier || email || username;
             // Validate Input
             if (!loginIdentifier || !password) {
@@ -72,6 +72,27 @@ export class AuthController {
                 });
                 return;
             }
+
+            
+        if (!captchaToken) {
+            return res.status(400).json({ message: "Security check missing. Please refresh." });
+        }
+
+        const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
+
+        // Verify with Google
+        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+        const recaptchaData = await recaptchaRes.json();
+
+        // Check Google's score
+        if (!recaptchaData.success || recaptchaData.score < 0.5) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Security check failed. Automated requests are not allowed." 
+            });
+        }
+        console.log("Recaptcha Data from Google:", recaptchaData);
             // Call the AuthService to handle user authentication
             const result = await AuthService.signIn(loginIdentifier, password);
             

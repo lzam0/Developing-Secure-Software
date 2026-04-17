@@ -7,6 +7,7 @@
         <script src="js/signIn.js" defer></script>
         <script src="/components/header.js"></script>
         <script src="/components/navbar.js" defer></script>
+        <script src="https://www.google.com/recaptcha/api.js?render=6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb"></script>
     </head>
     <body>
         
@@ -24,6 +25,7 @@
             <input type="password" id="password_input" name="password_input" placeholder="Please enter your password...">
 
             <button id="login_btn" type="submit">Log in</button>
+            <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response">
         </form>
         </div>
         <p class="description">Dont have an account? <a href="signup.html">Sign up</a></p>
