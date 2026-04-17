@@ -115,3 +115,49 @@ describe('Account Enumeration Protection - SignIn', () => {
     expect(bcrypt.hash).toHaveBeenCalledTimes(1);
   });
 });
+
+//testing response times for sign in and sign up to ensure that response times are randomised to prevent timing attacks for account enumeration
+describe('Timing Attack Protection - Jitter', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  test('signUp response time is delayed when user exists', async () => {
+    UserModel.findByEmail.mockResolvedValue({ id: 1, email: 'taken@test.com' });
+    UserModel.findByUsername.mockResolvedValue(null);
+    bcrypt.hash.mockResolvedValue('fakehash');
+
+    const start = Date.now();
+    await AuthService.signUp('user', 'taken@test.com', 'Password1');
+    const duration = Date.now() - start;
+
+    expect(duration).toBeGreaterThanOrEqual(100); // jitter minimum
+    expect(duration).toBeLessThan(1000);          // jitter maximum + some headroom
+  });
+
+  test('signIn response time is delayed when user does not exist', async () => {
+    UserModel.findByEmailOrUsername.mockResolvedValue(null);
+    bcrypt.hash.mockResolvedValue('fakehash');
+
+    const start = Date.now();
+    await AuthService.signIn('ghost@test.com', 'Password1').catch(() => {});
+    const duration = Date.now() - start;
+
+    expect(duration).toBeGreaterThanOrEqual(100);
+    expect(duration).toBeLessThan(1000);
+  });
+
+  test('jitter produces different response times across multiple calls', async () => {
+    UserModel.findByEmail.mockResolvedValue({ id: 1, email: 'taken@test.com' });
+    UserModel.findByUsername.mockResolvedValue(null);
+    bcrypt.hash.mockResolvedValue('fakehash');
+
+    const times = [];
+    for (let i = 0; i < 5; i++) {
+      const start = Date.now();
+      await AuthService.signUp('user', 'taken@test.com', 'Password1');
+      times.push(Date.now() - start);
+    }
+
+    const allSame = times.every(t => t === times[0]);
+    expect(allSame).toBe(false); // responses should not all take identical time
+  });
+});
