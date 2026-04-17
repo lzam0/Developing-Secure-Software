@@ -7,6 +7,7 @@
         <script src="js/signUp.js" defer></script>
         <script src="/components/header.js"></script>
         <script src="/components/navbar.js" defer></script>
+        <script src="https://www.google.com/recaptcha/api.js?render=6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb"></script>
     </head>
     <body>
         <div id="header"></div>
@@ -40,6 +41,7 @@
             <div>
         <div id="message_display" style="display: none; margin-bottom: 15px; padding: 10px; border-radius: 5px; text-align: center; font-family: Arial, sans-serif;"></div>
 
+        <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response">
         <form method="post" id="signup_form">
             </form>
     </div>
