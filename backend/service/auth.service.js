@@ -2,6 +2,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import UserModel from '../models/user.model.js';
 import dotenv from 'dotenv';
+import { randomUUID } from 'crypto';
+import pool from '../controllers/database.js';
+
 import {randomInt} from 'crypto';
 import rateLimit from 'express-rate-limit';
 dotenv.config();
@@ -27,8 +30,28 @@ const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10);
 const PEPPER = process.env.PEPPER;
 
 // Helper function to generate token
+// function generateToken(payload) {
+//     return jwt.sign(payload, JWT_WEB_TOKEN_SECRET, { expiresIn: JWT_EXPIRES_IN });
+// }
+
+// convert a duration string into milliseconds
+// needed for the timestamp in the revoked_tokens table to know when a token is expired
+function parseDurationMs(duration) { // calculate the expires_at timestamp stored in the datavase + revoked jti
+    const units = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }; // milliseconds per unit (minute, hour, day)
+    const match = String(duration).match(/^(\d+)([smhd])$/); // regex - ^(\d+) (number (2)), ([smhd])$ (unit (h)) 
+    if (!match) return 2 * 3_600_000;
+    return parseInt(match[1], 10) * units[match[2]]; // multiply number by unit value 
+}
+
+// helper function to generate token  
 function generateToken(payload) {
-    return jwt.sign(payload, JWT_WEB_TOKEN_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const jti = randomUUID(); // create unique jti for every jwt token
+    // create the token
+    // takes the user's info and hides the jti inside it, locked using JWT_WEB_TOKEN_SECRET
+    const token = jwt.sign({ ...payload, jti }, JWT_WEB_TOKEN_SECRET, { expiresIn: JWT_EXPIRES_IN }); 
+    // calculate when token will expire
+    const expiresAt = new Date(Date.now() + parseDurationMs(JWT_EXPIRES_IN));
+    return { token, jti, expiresAt }; // return for sign-in process
 }
 
 //add jitter to response time
@@ -66,13 +89,29 @@ export class AuthService {
 
         }
 
+        // Check if the email is valid
+        if (!this.validateEmail(email)) {
+            const err = new Error('Invalid email format');
+            err.statusCode = 400;
+            throw err;
+        }
+
+        // Check if the password is valid
+        if (!this.validatePassword(password)) {
+            const err = new Error('Password does not meet requirements');
+            err.statusCode = 400;
+            throw err;
+        }
+
         // Hash the password with salt and pepper
-        const hashedPassword = await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
+        const hashedPassword = await this.hashPassword(password);
         
         // Create the user
         const newUser = await UserModel.create(username, email, hashedPassword);
         await addJitter(); // add random delay to make timing attacks harder
         
+        // Generate JWT token for the new user
+        const { token } = generateToken({ id: newUser.id, username: newUser.username });
         
         // userID, username, email, token SHOULD ONLY BE RETURNED IN THE SIGN IN, NOT SIGN UP. IN SIGN UP, WE WANT TO RETURN A GENERIC SUCCESS MESSAGE TO PREVENT ACCOUNT ENUMERATION
             return {
@@ -98,7 +137,7 @@ export class AuthService {
         }
 
         // Compare the provided password with the stored hashed password
-        const isPasswordValid = await bcrypt.compare(password + PEPPER, user.password);
+        const isPasswordValid = await this.verifyPassword(password, user.password);
         if (!isPasswordValid) {
             await addJitter(); // add random delay to make timing attacks harder
             const err = new Error('Invalid credentials');
@@ -107,7 +146,8 @@ export class AuthService {
         }
 
         // Generate JWT token for the authenticated user
-        const token = generateToken({ id: user.id, username: user.username });
+        const { token } = generateToken({ id: user.id, username: user.username });
+        // const token = generateToken({ id: user.id, username: user.username });
         await addJitter(); // add random delay to make timing attacks harder
 
         // Return user details and token - userID, username, email, token
@@ -120,5 +160,65 @@ export class AuthService {
             token
         };
     }
+
+    // blacklist of ids so tokens cannot be used again 
+    static async revokeToken(jti, userID, expiresAt) {
+        // add the tokens unique id (jti) to the revoked_tokens table 
+        await pool.query(
+            `INSERT INTO revoked_tokens (jti, userid, expires_at)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (jti) DO NOTHING`,
+             // $1 - unique serial number (jti) of the token 
+             // $2 - id of the user 
+             // $3 - token expire time 
+             [jti, userID, expiresAt]
+        );
+    }
+    
+    // Dylan implement regex into here
+    static validateEmail(email){
+        /* Validate Email Constraints
+        * 
+        */
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+        if (!emailRegex.test(email)) {
+            return false;
+        } else {
+            return true;
+        }
+        return null;
+    }
+
+    static validatePassword(password){
+        /* Validate Password Constraints
+        * 
+        */
+
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d){8,72}$/;
+
+        if (!passwordRegex.test(password)) {
+            return false;
+        } else {
+            return true;
+        }
+        return null;
+    }
+
+    static async hashPassword(password) {
+        return await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
+    }
+
+    static async verifyPassword(password, hash) {
+        return bcrypt.compare(password + PEPPER, hash);
+    }
 }
 export default AuthService;
+
+// TEST NEED TO REMOVE
+// const testPayload = { id: 1, username: 'testuser'};
+// const result = generateToken(testPayload);
+
+// console.log("1. Token string created:", result.token.substring(0, 20));
+// console.log("2. Unique jti generated:", result.jti);
+// console.log("3. Expiry date calculated", result.expiresAt.toLocaleString());

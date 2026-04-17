@@ -1,5 +1,11 @@
 // Auth Controller
 import { AuthService } from '../service/auth.service.js';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
+
 export class AuthController {
     /**
  * POST /api/auth/signup
@@ -68,7 +74,28 @@ export class AuthController {
             }
             // Call the AuthService to handle user authentication
             const result = await AuthService.signIn(loginIdentifier, password);
-
+            
+            // revoke the old token before making a new one 
+            // prevent a malicious actor from using the old token
+            const oldToken = req.cookies?.token;
+            if (oldToken) {
+                try {
+                    // decode and verify the existing token
+                    const decoded = jwt.verify(oldToken, JWT_SECRET);
+                    // check if the token has a jti (unique for specific tokens)
+                    if (decoded?.jti) {
+                        // convert expiry time to milliseconds
+                        const expiresAt = new Date(decoded.exp * 1000);
+                        // add the token to the revoked_tokens table by callng AuthService
+                        // decoded.jti: unique token identifier 
+                        // decoded.id: user id with the token 
+                        // expiresAt: when the token is due to expire 
+                        await AuthService.revokeToken(decoded.jti, decoded.id, expiresAt);
+                    }
+                } catch {
+                    // old token already expired or invalid 
+                }
+            }
             // Set JWT as HTTP-only cookie so the browser sends it automatically on future requests
             res.cookie('token', result.token, {
                 httpOnly: true,
@@ -91,13 +118,37 @@ export class AuthController {
  * POST /api/auth/signout
  * Sign Out the user by clearing the token cookie
  */
-    static async signOut(req, res) {
-        // Clear the token cookie off browser
-        res.clearCookie('token');
-        res.status(200).json({
-            success: true,
-            message: 'Logout successful'
-        });
+    static async signOut(req, res, next) {
+        try {
+            // read the current token (JWT) from the cookie
+            const token = req.cookies?.token
+
+            if (token) { 
+                // inside the token ti see the serial number (jti) and its expiry time
+                const decoded = jwt.decode(token); 
+                // check if the token has a serial number and expiry time 
+                // then add it to revoked_token table 
+                if (decoded?.jti && decoded?.exp) { 
+                    // convert number to a date 
+                    const expiresAt = new Date(decoded.exp * 1000); 
+                    // tell the database to blacklist this specific jti
+                    await AuthService.revokeToken(decoded.jti, decoded.id, expiresAt); 
+                }
+            }
+            // tell the browser to delete the token cookie 
+            res.clearCookie('token', {
+                httpOnly: true, 
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
+            
+            res.status(200).json({
+                success: true,
+                message: 'Logout successful'
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
     /**
