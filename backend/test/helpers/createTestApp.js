@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import pool from '../../controllers/database.js';
+import helmet from 'helmet';
 import { AuthService } from '../../service/auth.service.js';
 
 /**
@@ -11,6 +12,22 @@ import { AuthService } from '../../service/auth.service.js';
 
 export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) {
     const app = express();
+
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'"],
+                styleSrc:  ["'self'"],
+                imgSrc: ["'self'", "data:"],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                frameAncestors: ["'none'"]
+            }
+        }
+    }));
+
     app.use(express.json());
     app.use(cookieParser());
 

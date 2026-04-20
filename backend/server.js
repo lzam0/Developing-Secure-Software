@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 // const pool = require("pool");
 const __filename = fileURLToPath(import.meta.url);
@@ -17,6 +18,21 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            // self - only from same domain 
+            defaultSrc: ["'self'"], // same origin
+            scriptSrc: ["'self'"], // no external scripts
+            styleSrc:  ["'self'"], // same origin css only 
+            imgSrc: ["'self'", "data:"], // same origin images 
+            connectSrc: ["'self'"], // api calls only to same origin
+            fontSrc: ["'self'"], // same origin fonts only 
+            objectSrc: ["'none'"], // no plugins 
+            frameAncestors: ["'none'"] // no iframes
+        }
+    }
+}));
 
 // Middleware
 app.use(cors({
