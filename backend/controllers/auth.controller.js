@@ -1,5 +1,6 @@
 // Auth Controller
 import { AuthService } from '../service/auth.service.js';
+import crypto from "crypto"
 export class AuthController {
     /**
  * POST /api/auth/signup
@@ -65,6 +66,29 @@ export class AuthController {
             next(error);
         }
     }
+
+    static async getCsrfToken(req,res) {
+        try{
+            const csrfToken = crypto.randomBytes(32).toString("hex")
+
+            res.cookie('csrfToken', csrfToken, {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: 'CSRF Token Issued'
+
+            });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+
+
     /**
  * POST /api/auth/signout
  * Sign Out the user by clearing the token cookie
@@ -72,6 +96,11 @@ export class AuthController {
     static async signOut(req, res) {
         // Clear the token cookie off browser
         res.clearCookie('token');
+        res.clearCookie('csrfToken', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+        });
         res.status(200).json({
             success: true,
             message: 'Logout successful'
