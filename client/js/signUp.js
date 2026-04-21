@@ -8,6 +8,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
     const email = document.getElementById("email_input").value;
     const password = document.getElementById("password_input").value;
     const confirmPassword = document.getElementById("confirm_password_input").value;
+    const confirmEmail = document.getElementById("confirm_email_input").value;
 
     const errorEl = document.getElementById("form_error");
     const showError = (msg) => {
@@ -32,7 +33,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
 
     // Send a POST request to the backend API for registration
     try {
-        const API_BASE = window.location.origin === "null" ? "http://localhost:5000" : "";
+        const API_BASE = window.location.origin === "null" ? "http://localhost:5050" : "";
         const response = await fetch(`${API_BASE}/auth/signUp`, {
             method: "POST",
             headers: {
@@ -48,7 +49,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
         const data = await response.json();
 
         if(response.ok) {
-            // If registration is successful, redirect to the login page
+            // If registration is successful, redirect to the 2fa page for account verification
             
             // show the generic success message
             messageDisplay.textContent = data.message; 
@@ -57,9 +58,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
             // clear the form so they don't submit twice
             document.getElementById("signup_form").reset();
 
-            setTimeout(() => {
-                window.location.href = "login.html";
-            }, 4000);
+            window.location.href = "2fa.html";
         }
      else {
             // this only triggers for ACTUAL errors (like server down or invalid email format)

@@ -1,7 +1,10 @@
 // Auth Controller
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
+import bcrypt from 'bcrypt';
 import { AuthService } from '../service/auth.service.js';
+import OtpModel from '../models/otp.model.js';
+import UserModel from '../models/user.model.js';
+import EmailController from './email.controller.js';
 
 export class AuthController {
     /**
@@ -19,7 +22,32 @@ export class AuthController {
             }
             // Call the AuthService to handle user registration
             const result = await AuthService.signUp(username, email, password);
-            res.status(201).json({
+
+            // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the username/email already exists
+            if (!result.user) {
+                return res.status(201).json({
+                    success: true,
+                    message: result.message,
+                    data: {
+                        status: result.status
+                    }
+                });
+            }
+
+            // Generate signup verification OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+            await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
+            await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
+
+            req.session.userId = result.user.id;
+            req.session.otpPurpose = 'signup';
+
+            await EmailController.sendSignUpOtpEmail(result.user.email, otp, result.user.username);
+                
+            return res.status(201).json({
                 success: true,
                 message: result.message,
                 data: result
@@ -27,6 +55,7 @@ export class AuthController {
         }
         catch (error) {
             // Pass error to error handling middleware
+            console.error(error);
             next(error);
         }
     }
@@ -50,74 +79,24 @@ export class AuthController {
             // Call the AuthService to handle user authentication
             const result = await AuthService.signIn(loginIdentifier, password);
 
-            // Generate 6-digit OTP
+            // Generate login 2FA OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            console.log("OTP:", otp)
+            const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+            const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-            // Store temporary 2FA state in session
-            req.session.otp = otp;
+            await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
+            await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
+
             req.session.userId = result.user.id;
-            req.session.otpAttempts = 0;
-            req.session.otpExpires = Date.now() + 5 * 60 * 1000;
+            req.session.otpPurpose = 'signin';
 
-            // Configure Nodemailer
-            /* const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
-            });
+            await EmailController.sendSignInOtpEmail(result.user.email, otp, result.user.username);
 
-            // Send OTP email
-            await transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to: result.user.email,
-                subject: 'Your login verification code',
-                text: `Your verification code is: ${otp}. It expires in 5 minutes.`
-            }); */
-
-            if (process.env.EMAIL_USER && 
-                process.env.EMAIL_PASS && 
-                process.env.EMAIL_USER !== 'test@test.com') 
-                {
-                    const transporter = nodemailer.createTransport({
-                        service: 'gmail',
-                        auth: {
-                            user: process.env.EMAIL_USER,
-                            pass: process.env.EMAIL_PASS
-                        }
-                    });
-
-                    await transporter.sendMail({
-                        from: process.env.EMAIL_USER,
-                        to: result.user.email,
-                        subject: 'Your login verification code',
-                        text: `Your verification code is: ${otp}. It expires in 5 minutes.`
-                    });
-                } 
-            else {
-                console.log('Email sending skipped in local test mode');
-            }
-
-            // Do not issue the real JWT yet
-            res.status(200).json({
+            return res.status(200).json({
                 success: true,
-                message: 'OTP sent to email'
+                message: 'Verification code sent to email.'
             });
 
-            // Set JWT as HTTP-only cookie so the browser sends it automatically on future requests
-            /* res.cookie('token', result.token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 2 * 60 * 60 * 1000 // 2 hours, matches JWT_EXPIRES_IN default
-            });
-            res.status(200).json({
-                success: true,
-                message: 'Login successful',
-                data: result
-            }); */
         }
         catch (error) {
             // Pass error to error handling middleware
@@ -126,39 +105,71 @@ export class AuthController {
         }
     }
 
-    static async verifyOtp(req, res, next){ 
-        try{
-            const {otp} = req.body
-            
-            if (!req.session || !req.session.otp) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'No OTP session found'
-                });
-            }
+    static async verifyOtp(req, res, next) {
+    try {
+        const { otp } = req.body;
 
-            if (Date.now() > req.session.otpExpires) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'OTP expired'
-                });
-            }
+        if (!req.session || !req.session.userId || !req.session.otpPurpose) {
+            return res.status(400).json({
+                success: false,
+                message: 'No OTP session found'
+            });
+        }
 
-            if (req.session.otpAttempts >= 3) {
-                return res.status(429).json({
-                    success: false,
-                    message: 'Too many incorrect attempts'
-                });
-            }
+        const otpRecord = await OtpModel.findLatestActiveByUserId(
+            req.session.userId,
+            req.session.otpPurpose
+        );
 
-            if (otp !== req.session.otp) {
-                req.session.otpAttempts += 1;
-                return res.status(401).json({
-                    success: false,
-                    message: 'Invalid verification code'
-                });
-            }
+        if (!otpRecord) {
+            return res.status(400).json({
+                success: false,
+                message: 'No active verification code found'
+            });
+        }
 
+        if (new Date() > new Date(otpRecord.expires_at)) {
+            await OtpModel.markUsed(otpRecord.otpid);
+            return res.status(400).json({
+                success: false,
+                message: 'OTP expired'
+            });
+        }
+
+        if (otpRecord.attempts >= 5) {
+            await OtpModel.markUsed(otpRecord.otpid);
+            req.session.destroy(() => {});
+            return res.status(403).json({
+                success: false,
+                message: 'Too many incorrect OTP attempts. Please start again.'
+            });
+        }
+
+        const isOtpValid = await bcrypt.compare(otp, otpRecord.otp_hash);
+
+        if (!isOtpValid) {
+            await OtpModel.incrementAttempts(otpRecord.otpid);
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid verification code'
+            });
+        }
+
+        await OtpModel.markUsed(otpRecord.otpid);
+
+        if (req.session.otpPurpose === 'signup') {
+            await UserModel.markVerified(req.session.userId);
+
+            req.session.destroy(() => {});
+
+            return res.status(200).json({
+                success: true,
+                message: 'Email verified successfully',
+                redirectTo: 'login.html'
+            });
+        }
+
+        if (req.session.otpPurpose === 'signin') {
             const token = jwt.sign(
                 { id: req.session.userId },
                 process.env.JWT_WEB_TOKEN_SECRET,
@@ -176,13 +187,21 @@ export class AuthController {
 
             return res.status(200).json({
                 success: true,
-                message: 'Login successful'
+                message: 'Login successful',
+                redirectTo: 'blogListingPage.html'
             });
-
-        } catch (error) {
-            next(error);
         }
+
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid OTP purpose'
+        });
+
+    } catch (error) {
+        console.error(error);
+        next(error);
     }
+}
 
     /**
  * POST /api/auth/signout

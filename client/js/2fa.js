@@ -18,10 +18,16 @@ document.getElementById("mfa_form").addEventListener("submit", async (e) => {
         const data = await response.json();
 
         if (response.ok) {
-            window.location.href = "blogListingPage.html";
+            //Use backend-provided redirect
+            if (data.redirectTo) {
+                window.location.href = data.redirectTo;
+            } else {
+                window.location.href = "login.html"; // fallback
+            }
         } else {
             alert(`Verification failed: ${data.message}`);
         }
+
     } catch (error) {
         console.error("Error during OTP verification:", error);
         alert("An error occurred during OTP verification. Please try again.");

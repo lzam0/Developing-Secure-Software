@@ -8,7 +8,7 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
 
     // Send a POST request to the backend API for authentication
     try {
-        const API_BASE = window.location.origin === "null" ? "http://localhost:5000" : "";
+        const API_BASE = window.location.origin === "null" ? "http://localhost:5050" : "";
         const response = await fetch(`${API_BASE}/auth/signIn`, {
             method: "POST",
             headers: {
