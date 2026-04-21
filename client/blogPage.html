@@ -11,69 +11,106 @@
     <body>
         <nav class="topbar">
             <!-- link back home -->
-            <a href="/index.html" class="back-link">← Back</a>
+            <a href="/blogListingPage.html" class="back-link">← Back</a>
         </nav>
-        <article class="post-wrapper">
-            <!-- blog post header -->
+        <article class="post-wrapper" id="post-wrapper" style="display:none">
             <header class="post-header">
-                <span class="post-tag">Health Support</span>
-                <h1 class="post-title">Lorem ipsum dolor sit amet</h1>
+                <span class="post-tag" id="post-tag"></span>
+                <h1 class="post-title" id="post-title"></h1>
+
                 <div class="post-meta">
                     <div class="author-information">
-                        <div class="author-avatar">MC</div>
+                        <div class="author-avatar" id="author-avatar"></div>
                         <div>
-                            <p class="author-name">By Melissa Carter</p>
-                            <p class="post-date">May 2026 · 8 min read</p>
+                            <p class="author-name" id="author-name"></p>
+                            <p class="post-date" id="post-date"></p>
                         </div>
                     </div>
                 </div>
             </header>
             <hr class="post-divider"/>
-            <section class="post-body">
-                <p class="post-lead">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in 
-                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia 
-                    deserunt mollit anim id est laborum.
-                </p>
-                <!-- uploaded image section -->
-                <div class="inline-image">
-                    <div class="inline-placeholder">
-                        <p>IMAGE UPLOAD PLACEHOLDER</p>
-                    </div>
-                </div>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in 
-                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia 
-                    deserunt mollit anim id est laborum.
-                </p>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in 
-                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia 
-                    deserunt mollit anim id est laborum.
-                </p>
-            </section>
+            <section class="post-body" id="post-body"></section>
             <hr class="post-divider"/>
             <footer class="post-footer">
-                <div class="post-tag-row">
-                    <span class="post-tag">Health Support</span>
-                    <span class="post-tag tag-secondary">Mental Health</span>
-                    <span class="post-tag tag-secondary">Lifestyle</span>
-                </div>
+                <div class="post-tag-row" id="post-tag-row"></div>
             </footer>
         </article>
+        <p id="post-error" style="display:none;text-align:center;margin-top:3rem;color:#6b4c3b;"></p>
     </body>
+    <script>
+        function initials(username) {
+            return username.slice(0, 2).toUpperCase();
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleString('default', { month: 'long', year: 'numeric' });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        async function loadPost() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("id");
+
+            if (!id) {
+                showError("No post ID provided.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/posts/${id}`, { credentials: "include" });
+
+                if (response.status === 404) {
+                    showError("Post not found.");
+                    return;
+                }
+
+                if (!response.ok) {
+                    showError("Failed to load post.");
+                    return;
+                }
+
+                const data = await response.json();
+                const post = data.data.post;
+                const tag = Array.isArray(post.tags) ? post.tags[0] : post.tags;
+
+                document.getElementById("post-tag").textContent = tag;
+                document.getElementById("post-title").textContent = post.title;
+                document.getElementById("author-avatar").textContent = initials(post.username);
+                document.getElementById("author-name").textContent = "By " + post.username;
+                document.getElementById("post-date").textContent = formatDate(post.created_at);
+
+                const bodyEl = document.getElementById("post-body");
+                bodyEl.innerHTML = post.content
+                    .split(/\n+/)
+                    .filter(p => p.trim())
+                    .map(p => `<p>${escapeHtml(p.trim())}</p>`)
+                    .join("");
+
+                const tagRow = document.getElementById("post-tag-row");
+                const tags = Array.isArray(post.tags) ? post.tags : [post.tags];
+                tagRow.innerHTML = tags.map((t, i) =>
+                    `<span class="post-tag${i > 0 ? ' tag-secondary' : ''}">${escapeHtml(t)}</span>`
+                ).join("");
+
+                document.getElementById("post-wrapper").style.display = "";
+            } catch (error) {
+                console.error("Error loading post:", error);
+                showError("An error occurred while loading the post.");
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById("post-error");
+            el.textContent = msg;
+            el.style.display = "";
+        }
+
+        loadPost();
+    </script>
 </html>
 
 <!------------------ CSS ------------------>

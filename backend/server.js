@@ -5,6 +5,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.routes.js";
+import postsRoutes from "./routes/posts.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import { authenticateToken } from "./middleware/auth.middleware.js";
 import rateLimit from 'express-rate-limit';
@@ -28,9 +29,10 @@ app.use(cors({
 }));
 
 // Rate Limiting Middleware - apply to all requests
+
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 1000,
 });
 app.use(globalLimiter);
 
@@ -52,6 +54,7 @@ app.use(express.static(path.join(__dirname, "../client")));
 
 // API Routes
 app.use("/auth", authRoutes);
+app.use("/posts", postsRoutes);
 
 // Error Handler - must be last
 app.use(errorHandler);
