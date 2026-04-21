@@ -13,7 +13,7 @@ async function loadHeader() {
 
         document.getElementById("nav-signout").addEventListener("click", async (e) => {
             e.preventDefault();
-            await fetch(`${API_BASE}/auth/signOut`, { method: "POST", credentials: "include" });
+            await fetch(`${BACKEND_URL}/auth/signOut`, { method: "POST", credentials: "include" });
             window.location.href = "/login.html";
         });
     } else {
