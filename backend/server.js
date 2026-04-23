@@ -9,6 +9,7 @@ import postsRoutes from "./routes/posts.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import { authenticateToken } from "./middleware/auth.middleware.js";
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,9 +19,21 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-// Parse cookies and JSON before any middleware that reads them
-app.use(cookieParser());
-app.use(express.json());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            // self - only from same domain 
+            defaultSrc: ["'self'"], // same origin
+            scriptSrc: ["'self'"], // no external scripts
+            styleSrc:  ["'self'"], // same origin css only 
+            imgSrc: ["'self'", "data:"], // same origin images 
+            connectSrc: ["'self'"], // api calls only to same origin
+            fontSrc: ["'self'"], // same origin fonts only 
+            objectSrc: ["'none'"], // no plugins 
+            frameAncestors: ["'none'"] // no iframes
+        }
+    }
+}));
 
 // CORS (Cross-Origin Resource Sharing) - allow requests from the frontend
 app.use(cors({
