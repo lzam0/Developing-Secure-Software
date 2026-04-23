@@ -37,7 +37,7 @@ export class AuthController {
         if (!recaptchaData.success || recaptchaData.score < 0.5) {
             return res.status(403).json({ 
                 success: false, 
-                message: "Security check failed. Automated requests are not allowed." 
+                message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
             });
         }
         console.log("Recaptcha Data from Google:", recaptchaData);
@@ -89,7 +89,7 @@ export class AuthController {
         if (!recaptchaData.success || recaptchaData.score < 0.5) {
             return res.status(403).json({ 
                 success: false, 
-                message: "Security check failed. Automated requests are not allowed." 
+                message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
             });
         }
         console.log("Recaptcha Data from Google:", recaptchaData);
