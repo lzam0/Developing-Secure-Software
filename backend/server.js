@@ -24,7 +24,6 @@ app.use(helmet({
             // self - only from same domain 
             defaultSrc: ["'self'"], // same origin
             scriptSrc: ["'self'"], // no external scripts
-            styleSrc:  ["'self'"], // same origin css only 
             imgSrc: ["'self'", "data:"], // same origin images 
             connectSrc: ["'self'"], // api calls only to same origin
             fontSrc: ["'self'"], // same origin fonts only 
