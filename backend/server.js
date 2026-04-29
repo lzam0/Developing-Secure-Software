@@ -10,6 +10,7 @@ import { errorHandler } from "./middleware/error.middleware.js";
 import { authenticateToken } from "./middleware/auth.middleware.js";
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { getHelmetConfig } from "./config/helmet.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,26 +20,18 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            // self - only from same domain 
-            defaultSrc: ["'self'"], // same origin
-            scriptSrc: ["'self'"], // no external scripts
-            imgSrc: ["'self'", "data:"], // same origin images 
-            connectSrc: ["'self'"], // api calls only to same origin
-            fontSrc: ["'self'"], // same origin fonts only 
-            objectSrc: ["'none'"], // no plugins 
-            frameAncestors: ["'none'"] // no iframes
-        }
-    }
-}));
+app.use(helmet(getHelmetConfig()));
 
 // CORS (Cross-Origin Resource Sharing) - allow requests from the frontend
 app.use(cors({
     origin: process.env.FRONTEND_URL,
     credentials: true
 }));
+
+// Parse JSON/form bodies and cookies before routes need them
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Rate Limiting Middleware - apply to all requests
 

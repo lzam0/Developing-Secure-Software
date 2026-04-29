@@ -5,6 +5,7 @@
         <link rel="stylesheet" href="/style.css">
         <script src="/js/verify.js"></script>
         <script src="/js/auth-guard.js"></script>
+        <script src="/js/account.js" defer></script>
         <script src="/components/header.js"></script>
         <script src="/components/navbar.js" defer></script>
     </head>
@@ -65,133 +66,6 @@
 
 
         </main>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-        // load saved data
-        const fields = ['full_name_input', 'username_input', 'bio_input', 'email_input'];
-        fields.forEach(id => {
-            const savedVal = localStorage.getItem(id);
-            const element = document.getElementById(id);
-            if (savedVal && element) {
-                element.value = savedVal;
-            }
-        });
-
-        // profile edit logic
-        const editBtn = document.getElementById('edit_profile_btn');
-        const profileInputs = [
-            document.getElementById('full_name_input'),
-            document.getElementById('username_input'),
-            document.getElementById('bio_input')
-        ];
-
-        editBtn.addEventListener('click', () => {
-            // check if currently in read only mode
-            const isReadOnly = profileInputs[0].hasAttribute('readonly');
-
-            if (isReadOnly) {
-                // SWITCH TO EDIT MODE
-                profileInputs.forEach(input => input.removeAttribute('readonly'));
-                editBtn.innerText = "Save Profile";
-                editBtn.style.backgroundColor = "#27ae60";
-                
-            } else {
-                // SWITCH TO SAVE MODE
-                profileInputs.forEach(input => {
-                    input.setAttribute('readonly', true);
-                    localStorage.setItem(input.id, input.value);
-                });
-                editBtn.innerText = "Edit Profile";
-                editBtn.style.backgroundColor = "#485b49";
-                alert("Profile Saved locally!");
-            }
-        });
-
-
-        //edit email logic (mock)
-        document.getElementById('update_email_btn').addEventListener('click', () =>
-
-        {
-            const emailInput = document.getElementById('email_input');
-            if (emailInput.hasAttribute('readonly')) {
-                emailInput.removeAttribute('readonly');
-                emailInput.focus();
-                emailInput.style.borderColor = "#27ae60";
-            } else {
-                // simulating JWT Header sending
-                console.log("Sending to Backend via JWT:", { newEmail: emailInput.value });
-                
-                localStorage.setItem('email_input', emailInput.value); // update local store
-                alert("Email updated successfully!");
-                emailInput.setAttribute('readonly', true);
-                emailInput.style.borderColor = "#ccc";
-            }
-        });
-
-        
-
-        // delete account logic
-        document.getElementById('delete_account_btn').addEventListener('click', () => {
-            if (confirm("Clear all saved data?")) {
-                localStorage.clear();
-                location.reload();
-            }
-        });
-    });
-
-    //PASSWORD CHANGE LOGIC
-    document.addEventListener('DOMContentLoaded', () => {
-    const pwdArea = document.getElementById('password_change_area');
-    const showPwdBtn = document.getElementById('change_password_btn');
-    const cancelPwdBtn = document.getElementById('cancel_password_btn');
-    const savePwdBtn = document.getElementById('save_password_btn');
-
-    //toggle visibility of password change area
-    showPwdBtn.addEventListener('click', () => {
-        pwdArea.style.display = 'block';
-        showPwdBtn.style.display = 'none'; //hide main btn while editing
-        document.getElementById('password_input').value = ''; // clear
-
-    });
-
-    cancelPwdBtn.addEventListener('click', () => {
-        pwdArea.style.display = 'none';
-        showPwdBtn.style.display = 'block';
-        //clear inputs for security
-        document.querySelectorAll('#password_change_area input').forEach(i => i.value = '');
-    });
-
-    //mock backend logic
-    savePwdBtn.addEventListener('click', () => {
-        const current = document.getElementById('password_input').value;
-        const next = document.getElementById('new_password_input').value;
-        const confirm = document.getElementById('confirm_password_input').value;
-
-        const actualSavedPassword = localStorage.getItem('password_input') || 'user123';
-        //mock current password check
-        if (current !== actualSavedPassword) {
-            alert("Error 403: Current password incorrect.");
-            return;
-        }
-
-        if (next !== confirm || next === "") {
-            alert("New passwords must match and cannot be empty.");
-            return;
-        }
-
-        // simulating JWT Header sending
-        console.log("Sending to Backend via JWT:", { newPass: next });
-        
-        localStorage.setItem('password_input', next); // update local store
-        alert("Password updated successfully!");
-        
-        // close and reset
-        cancelPwdBtn.click(); 
-    });
-});
-
-            </script>
     </body> 
 </html>
 

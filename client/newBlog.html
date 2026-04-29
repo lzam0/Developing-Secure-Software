@@ -54,14 +54,14 @@
                 <div class="card-title">Upload an Image</div>
                 <label for="upload-zone">JPG, PNG or WebP</label>
                 <div class="upload-zone" id="uploadZone">
-                    <input type="file" file="thumbInput" accept="image/*" onchange="handleThumb(event)"/>
+                    <input type="file" id="thumbInput" accept="image/*"/>
                     <div class="upload-icon">⏏</div>
                     <p><strong>Click to upload</strong> or drag &amp; drop</p>
                 </div>
             </div>
             <!-- publish blog post bar  -->
             <div class="bottom-bar-right">
-                <button class="button button-publish" onclick="publishPost()">Publish Post →</button>
+                <button class="button button-publish" id="publish-post-button" type="button">Publish Post →</button>
             </div>
         </main>
     </body>

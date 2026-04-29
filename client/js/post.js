@@ -51,3 +51,6 @@ async function publishPost() {
         alert("An error occurred while publishing. Please try again.");
     }
 }
+
+document.getElementById("thumbInput")?.addEventListener("change", handleThumb);
+document.getElementById("publish-post-button")?.addEventListener("click", publishPost);

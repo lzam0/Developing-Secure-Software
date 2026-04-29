@@ -1,7 +1,7 @@
 // Reusable auth verification utility
 // Must be loaded before auth-guard.js and header.js
 
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = window.location.origin;
 
 
 async function verifyAuth() {
