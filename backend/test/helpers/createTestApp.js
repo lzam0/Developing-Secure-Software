@@ -102,5 +102,11 @@ export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) 
         return res.status(200).json({ success: true, data: 'secret data' });
     });
 
+    // POST /test/echo - used in sanitisation test 
+    // echoes res.body back to the test to inspect sanitise middleware does
+    app.post('/test/echo', authenticateToken, (req, res) => {
+        return res.status(200).json(req.body);
+    });
+    
     return app;
 }
