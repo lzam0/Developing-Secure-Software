@@ -27,10 +27,15 @@
                             <p class="post-date" id="post-date"></p>
                         </div>
                     </div>
+                    <a href="#" id="edit-button" class="edit-button" style="display:none">Edit Post</a>
                 </div>
             </header>
             <hr class="post-divider"/>
             <section class="post-body" id="post-body"></section>
+            <div class="paywall-cta" id="paywall-cta" style="display:none">
+                <p class="paywall-text">Subscribe to read the full post</p>
+                <a href="/payment.html" class="paywall-button">Subscribe</a>
+            </div>
             <hr class="post-divider"/>
             <footer class="post-footer">
                 <div class="post-tag-row" id="post-tag-row"></div>
@@ -236,6 +241,61 @@
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .edit-button {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #7a9e7e;
+            border: 1.5px solid #b8d4bb;
+            border-radius: 8px;
+            padding: 0.3rem 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .edit-button:hover {
+            background: #7a9e7e;
+            color: #fff;
+        }
+
+        .paywall-cta {
+            margin: 2rem 0;
+            padding: 2.5rem;
+            background: rgba(184, 212, 187, 0.12);
+            border: 1.5px solid #b8d4bb;
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .paywall-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: #3d2b1f;
+            margin-bottom: 1rem;
+        }
+
+        .paywall-button {
+            display: inline-block;
+            background: #7a9e7e;
+            color: #fff;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.55rem 1.4rem;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .paywall-button:hover {
+            background: #6a8e6e;
         }
     </style>
 </head>

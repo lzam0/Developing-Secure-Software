@@ -46,6 +46,7 @@ const protectedPages = [
     '/payment.html',
     '/account.html',
     '/newBlog.html',
+    '/editBlog.html',
     '/post.html',
     '/profile.html',
     '/health-metrics-tracker.html',
