@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { sanitiseBody } from "./middleware/sanitise.middleware.js";
 
 // const pool = require("pool");
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +50,7 @@ app.use(globalLimiter); // applies to all routes
 
 // Parse JSON bodies and cookies
 app.use(express.json());
+app.use(sanitiseBody);
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "../client")));
 

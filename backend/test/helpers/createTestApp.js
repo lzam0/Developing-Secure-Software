@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import pool from '../../controllers/database.js';
 import helmet from 'helmet';
 import { AuthService } from '../../service/auth.service.js';
+import { sanitiseBody } from '../../middleware/sanitise.middleware.js';
 
 /**
  * Creates a self-contained Express app for security testing.
@@ -29,6 +30,7 @@ export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) 
     }));
 
     app.use(express.json());
+    app.use(sanitiseBody);
     app.use(cookieParser());
 
     // Inline authenticateToken — uses the test secret, no env var dependency
