@@ -22,7 +22,7 @@ function renderCards(posts) {
     posts.forEach((post) => {
         const tag = Array.isArray(post.tags) ? post.tags[0] : post.tags;
         const card = document.createElement("a");
-        card.href = `/blogPage.html?id=${post.id}`;
+        card.href = `/blogPage.html?slug=${post.slug}`;
         card.className = "card";
         card.innerHTML = `
             <div class="card-body">

@@ -19,15 +19,15 @@ function showError(message) {
 
 async function loadPost() {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    const slug = params.get("slug");
 
-    if (!id) {
-        showError("No post ID provided.");
+    if (!slug) {
+        showError("No post found.");
         return;
     }
 
     try {
-        const response = await fetch(`${BACKEND_URL}/posts/${id}`, { credentials: "include" });
+        const response = await fetch(`${BACKEND_URL}/posts/slug/${encodeURIComponent(slug)}`, { credentials: "include" });
 
         if (response.status === 404) {
             showError("Post not found.");

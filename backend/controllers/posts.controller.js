@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { PostModel } from '../models/post.model.js';
 
 function generateSlug(title) {
@@ -9,15 +10,9 @@ function generateSlug(title) {
         .replace(/-+/g, '-');
 }
 
-async function uniqueSlug(title) {
-    let slug = generateSlug(title);
-    let candidate = slug;
-    let counter = 1;
-    while (await PostModel.slugExists(candidate)) {
-        candidate = `${slug}-${counter}`;
-        counter++;
-    }
-    return candidate;
+function generateUniqueSlug(title) {
+    const suffix = crypto.randomBytes(3).toString('hex');
+    return `${suffix}-${generateSlug(title)}`;
 }
 
 export class PostsController {
@@ -27,7 +22,7 @@ export class PostsController {
             const { title, tags, content } = req.body;
             const userid = req.user.id;
 
-            const slug = await uniqueSlug(title);
+            const slug = generateUniqueSlug(title);
             const tagsArray = Array.isArray(tags) ? tags : [tags];
 
             const post = await PostModel.create(title, slug, tagsArray, content, userid);
@@ -62,6 +57,21 @@ export class PostsController {
             }
 
             const post = await PostModel.findById(id);
+            if (!post) {
+                return res.status(404).json({ success: false, message: 'Post not found' });
+            }
+
+            res.status(200).json({ success: true, data: { post } });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async getOneBySlug(req, res, next) {
+        try {
+            const { slug } = req.params;
+
+            const post = await PostModel.findBySlug(slug);
             if (!post) {
                 return res.status(404).json({ success: false, message: 'Post not found' });
             }

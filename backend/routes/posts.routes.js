@@ -7,6 +7,7 @@ const router = Router();
 
 /* Public Routes */
 router.get('/', PostsController.getAll);
+router.get('/slug/:slug', PostsController.getOneBySlug);
 router.get('/:id', PostsController.getOne);
 
 /* Protected Routes */

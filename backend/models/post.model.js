@@ -54,13 +54,24 @@ export class PostModel {
         return result.rows[0];
     }
 
-    static async slugExists(slug) {
-        const result = await pool.query(
-            'SELECT 1 FROM posts WHERE slug = $1 LIMIT 1',
-            [slug]
-        );
-        return result.rows.length > 0;
+    static async findBySlug(slug) {
+        const query = `
+        SELECT
+            p.postid AS id,
+            p.title,
+            p.slug,
+            p.tags,
+            p.content,
+            p.userid,
+            p.created_at,
+            u.username
+        FROM posts p
+        JOIN users u ON p.userid = u.userid
+        WHERE p.slug = $1`;
+        const result = await pool.query(query, [slug]);
+        return result.rows[0];
     }
+
 }
 
 export default PostModel;
