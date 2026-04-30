@@ -6,6 +6,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
     const messageDisplay = document.getElementById("message_display");
     const username = document.getElementById("username_input").value;
     const email = document.getElementById("email_input").value;
+    const confirmEmail = document.getElementById("confirm_email_input").value;
     const password = document.getElementById("password_input").value;
     const confirmPassword = document.getElementById("confirm_password_input").value;
 
@@ -32,8 +33,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
 
     // Send a POST request to the backend API for registration
     try {
-        const API_BASE = window.location.origin === "null" ? "http://localhost:5000" : "";
-        const response = await fetch(`${API_BASE}/auth/signUp`, {
+        const response = await fetch(`${BACKEND_URL}/auth/signUp`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

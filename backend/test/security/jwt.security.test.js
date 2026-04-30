@@ -161,7 +161,7 @@ describe('JWT Security — Token Expiration', () => {
 // ---------------------------------------------------------------------------
 describe('JWT Security — Token Replay and Logout', () => {
 
-    it('documents that a logged-out JWT can still be replayed (known gap — no server-side denylist)', async () => {
+    it('should reject replay of a logged-out JWT because revoked tokens are denylisted server-side', async () => {
         // Get a valid token via sign-in
         const loginRes = await request(app)
             .post('/auth/signin')
@@ -174,12 +174,12 @@ describe('JWT Security — Token Replay and Logout', () => {
             .post('/auth/signout')
             .set('Cookie', cookieForRequest);
 
-        // Replay the old token — stateless JWT means server cannot block it without a denylist
-        // TODO: When a token denylist is added, flip this assertion to expect(res.status).to.equal(401)
+        // Replay the old token — this should now be blocked because signout revokes the token jti
         const replayRes = await request(app)
             .get('/api/protected')
             .set('Cookie', cookieForRequest);
-        expect(replayRes.status).to.equal(200); // Known gap: no server-side invalidation
+        expect(replayRes.status).to.equal(401);
+        expect(replayRes.body.message).to.equal('Token has been revoked');
     });
 
     it('should return 401 when no cookie is sent after signout', async () => {

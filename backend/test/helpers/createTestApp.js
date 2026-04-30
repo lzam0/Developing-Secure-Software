@@ -5,6 +5,7 @@ import pool from '../../controllers/database.js';
 import helmet from 'helmet';
 import { AuthService } from '../../service/auth.service.js';
 import { sanitiseBody } from '../../middleware/sanitise.middleware.js';
+import { getHelmetConfig } from '../../config/helmet.js';
 
 /**
  * Creates a self-contained Express app for security testing.
@@ -14,20 +15,7 @@ import { sanitiseBody } from '../../middleware/sanitise.middleware.js';
 export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) {
     const app = express();
 
-    app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'"],
-                styleSrc:  ["'self'"],
-                imgSrc: ["'self'", "data:"],
-                connectSrc: ["'self'"],
-                fontSrc: ["'self'"],
-                objectSrc: ["'none'"],
-                frameAncestors: ["'none'"]
-            }
-        }
-    }));
+    app.use(helmet(getHelmetConfig()));
 
     app.use(express.json());
     app.use(sanitiseBody);
