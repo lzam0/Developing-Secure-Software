@@ -1,3 +1,9 @@
+function getCSRFToken() {
+    return document.cookie.split(';')
+        .find(row => row.trim().startsWith('csrfToken='))
+        ?.trim().split("=")[1];
+}
+
 async function loadHeader() {
     const response = await fetch("/components/header.html");
     const data = await response.text();
@@ -13,7 +19,7 @@ async function loadHeader() {
 
         document.getElementById("nav-signout").addEventListener("click", async (e) => {
             e.preventDefault();
-            await fetch(`${BACKEND_URL}/auth/signOut`, { method: "POST", credentials: "include" });
+            await fetch(`${BACKEND_URL}/auth/signOut`, { method: "POST", credentials: "include", headers: { "X-CSRF-Token": getCSRFToken() } });
             window.location.href = "/login.html";
         });
     } else {
