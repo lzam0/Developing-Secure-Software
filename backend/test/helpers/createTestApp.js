@@ -111,5 +111,15 @@ export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) 
         return res.status(200).json({success: true})
     });
 
+    // PUT /api/csrf-protected - state-mutating route for CSRF PUT tests
+    app.put('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({ success: true });
+    });
+
+    // DELETE /api/csrf-protected - state-mutating route for CSRF DELETE tests
+    app.delete('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({ success: true });
+    });
+
     return app;
 }
