@@ -2,6 +2,8 @@
 <html>
     <head>
         <link rel="stylesheet" href="/styles.css">
+        <script src="/js/verify.js"></script>
+        <script src="/js/blog-page.js" defer></script>
         <script src="/components/header.js"></script>
         <script src="/components/navbar.js" defer></script>
         <title>Blog post</title>
@@ -10,68 +12,36 @@
     <body>
         <nav class="topbar">
             <!-- link back home -->
-            <a href="/index.html" class="back-link">← Back</a>
+            <a href="/blogListingPage.html" class="back-link">← Back</a>
         </nav>
-        <article class="post-wrapper">
-            <!-- blog post header -->
+        <article class="post-wrapper" id="post-wrapper" style="display:none">
             <header class="post-header">
-                <span class="post-tag">Health Support</span>
-                <h1 class="post-title">Lorem ipsum dolor sit amet</h1>
+                <span class="post-tag" id="post-tag"></span>
+                <h1 class="post-title" id="post-title"></h1>
+
                 <div class="post-meta">
                     <div class="author-information">
-                        <div class="author-avatar">MC</div>
+                        <div class="author-avatar" id="author-avatar"></div>
                         <div>
-                            <p class="author-name">By Melissa Carter</p>
-                            <p class="post-date">May 2026 · 8 min read</p>
+                            <p class="author-name" id="author-name"></p>
+                            <p class="post-date" id="post-date"></p>
                         </div>
                     </div>
+                    <a href="#" id="edit-button" class="edit-button" style="display:none">Edit Post</a>
                 </div>
             </header>
             <hr class="post-divider"/>
-            <section class="post-body">
-                <p class="post-lead">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in 
-                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia 
-                    deserunt mollit anim id est laborum.
-                </p>
-                <!-- uploaded image section -->
-                <div class="inline-image">
-                    <div class="inline-placeholder">
-                        <p>IMAGE UPLOAD PLACEHOLDER</p>
-                    </div>
-                </div>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in 
-                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia 
-                    deserunt mollit anim id est laborum.
-                </p>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
-                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
-                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in 
-                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia 
-                    deserunt mollit anim id est laborum.
-                </p>
-            </section>
+            <section class="post-body" id="post-body"></section>
+            <div class="paywall-cta" id="paywall-cta" style="display:none">
+                <p class="paywall-text">Subscribe to read the full post</p>
+                <a href="/payment.html" class="paywall-button">Subscribe</a>
+            </div>
             <hr class="post-divider"/>
             <footer class="post-footer">
-                <div class="post-tag-row">
-                    <span class="post-tag">Health Support</span>
-                    <span class="post-tag tag-secondary">Mental Health</span>
-                    <span class="post-tag tag-secondary">Lifestyle</span>
-                </div>
+                <div class="post-tag-row" id="post-tag-row"></div>
             </footer>
         </article>
+        <p id="post-error" style="display:none;text-align:center;margin-top:3rem;color:#6b4c3b;"></p>
     </body>
 </html>
 
@@ -271,6 +241,61 @@
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .edit-button {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #7a9e7e;
+            border: 1.5px solid #b8d4bb;
+            border-radius: 8px;
+            padding: 0.3rem 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .edit-button:hover {
+            background: #7a9e7e;
+            color: #fff;
+        }
+
+        .paywall-cta {
+            margin: 2rem 0;
+            padding: 2.5rem;
+            background: rgba(184, 212, 187, 0.12);
+            border: 1.5px solid #b8d4bb;
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .paywall-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: #3d2b1f;
+            margin-bottom: 1rem;
+        }
+
+        .paywall-button {
+            display: inline-block;
+            background: #7a9e7e;
+            color: #fff;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.55rem 1.4rem;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .paywall-button:hover {
+            background: #6a8e6e;
         }
     </style>
 </head>

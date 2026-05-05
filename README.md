@@ -153,3 +153,35 @@ The frontend is located inside the **public** directory and includes:
 
 # Security
 To prevent SQL Injection read into here: https://snyk.io/blog/preventing-sql-injection-attacks-node-js/
+
+---
+
+# Page Access
+
+Pages are split into two categories based on whether a valid session (JWT cookie) is required.
+
+Authentication is enforced client-side via `client/js/verify.js` (defines `verifyAuth()`) and `client/js/auth-guard.js` (redirects to `/login.html` if the session is invalid). All pages load `verify.js` first to check session state and update the navbar accordingly.
+
+### Protected — requires a valid session
+
+| Page | File |
+|------|------|
+| My Account | `client/account.html` |
+| Health Metrics Tracker | `client/health-metrics-tracker.html` |
+| Health Diary | `client/healthdiary.html` |
+| Medication Tracker | `client/medication-tracker.html` |
+| New Blog Post | `client/newBlog.html` |
+| Payment | `client/payment.html` |
+
+Unauthenticated users who navigate to any of these pages are automatically redirected to `/login.html`.
+
+### Public — no session required
+
+| Page | File | Notes |
+|------|------|-------|
+| Home | `client/index.html` | Redirects to `/blogListingPage.html` if already logged in |
+| Login | `client/login.html` | |
+| Sign Up | `client/signup.html` | |
+| Two-Factor Auth | `client/2fa.html` | Shown mid-login flow before session is established |
+| Blog Listing | `client/blogListingPage.html` | |
+| Blog Post | `client/blogPage.html` | |
