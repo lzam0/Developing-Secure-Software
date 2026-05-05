@@ -1,0 +1,221 @@
+<!------------------ HTML ------------------>
+<html>
+    <head>
+        <link rel="stylesheet" href="/styles.css">
+        <script src="/js/verify.js"></script>
+        <script src="/js/auth-guard.js"></script>
+        <script src="/components/header.js"></script>
+        <script src="/components/navbar.js" defer></script>
+        <script src="/js/editPost.js" defer></script>
+        <title>Edit blog post</title>
+    </head>
+    <div id="header"></div>
+    <body>
+        <nav class="topbar">
+            <a href="/blogListingPage.html" class="back-link">← Back</a>
+        </nav>
+        <main class="page">
+            <h1 class="page-heading">Edit blog post</h1>
+            <div class="card">
+                <div class="card-title">Post Details</div>
+                <div class="form-group">
+                    <label for="post-title">Title</label>
+                    <input type="text" id="post-title" class="title-input"/>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">Blog Tag</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tag">Tag</label>
+                        <select id="category">
+                            <option>Health Support</option>
+                            <option>Lifestyle</option>
+                            <option>Mindfulness</option>
+                            <option>Sleep &amp; Recovery</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">Blog content</div>
+                <div class="form-group">
+                    <label for="post-body">Your post</label>
+                    <textarea id="post-body" placeholder="Start writing your post here..."></textarea>
+                </div>
+            </div>
+            <div class="bottom-bar-right">
+                <button class="button button-publish" id="save-post-button" type="button">Save Changes →</button>
+            </div>
+        </main>
+    </body>
+</html>
+
+<!------------------ CSS ------------------>
+<head>
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #faf7f2;
+            color: #3d2b1f;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #fff9f3;
+            border-bottom: 1px solid #e8ede9;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            height: 62px;
+            box-shadow: 0 1px 12px rgba(61, 43, 21, 0.06);
+        }
+
+        .back-link {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6b4c3b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #7a9e7e;
+        }
+
+        .page {
+            max-width: 860px;
+            margin: 1.2rem auto 3rem;
+            padding: 0 1.5rem;
+        }
+
+        .page-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3d2b1f;
+            margin-bottom: 1rem;
+        }
+
+        .card {
+            background: #fff9f3;
+            border-radius: 14px;
+            box-shadow: 0 2px 20px rgba(61, 43, 31, 0.08);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(184, 212, 187, 0.3);
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6b4c3b;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: #7a9e7e;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #6b4c3b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.45rem;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #e8ede9;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            color: #3d2b1f;
+            background: #faf7f2;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #7a9e7e;
+            box-shadow: 0 0 0 3px rgba(122, 158, 126, 0.15);
+            background: #fff;
+        }
+
+        .title-input {
+            font-family: 'Playfair Display', serif !important;
+            font-size: 1.4rem !important;
+            font-weight: 500;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 240px;
+            line-height: 1.7;
+        }
+
+        .bottom-bar-right {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .button-publish {
+            background: #b8d4bb;
+            color: #fff;
+        }
+
+        .button-publish:hover {
+            background: #6a8e6e;
+            box-shadow: 0 4px 14px rgba(122, 158, 126, 0.35);
+        }
+    </style>
+</head>

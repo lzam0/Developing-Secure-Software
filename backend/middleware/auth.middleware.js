@@ -74,4 +74,21 @@ export const authenticateToken = async (req, res, next) => {
     next();
 };
 
+export const authenticateTokenOptional = async (req, res, next) => {
+    try {
+        const token = req.cookies?.token;
+        if (!token) return next();
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (!decoded.jti) return next();
+        const { rows } = await pool.query(
+            'SELECT 1 FROM revoked_tokens WHERE jti = $1 LIMIT 1',
+            [decoded.jti]
+        );
+        if (rows.length === 0) req.user = decoded;
+    } catch {
+        // expired, tampered, or malformed — treat as unauthenticated
+    }
+    next();
+};
+
 export default authenticateToken;
