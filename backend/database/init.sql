@@ -19,8 +19,12 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS posts (
     postid SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    tags VARCHAR(255)[] NOT NULL,
     content TEXT NOT NULL,
-    userid INTEGER REFERENCES users(userid) ON DELETE CASCADE
+    userid INTEGER REFERENCES users(userid) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create Diary Table
@@ -46,4 +50,6 @@ CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires ON revoked_tokens(expires_
 -- INSERT TEST USER
 --- PASSWORD IS "123" WITH BCRYPT HASH + PEPPER + SALT_ROUNDS 10
 INSERT INTO users (username, email, password) 
-VALUES ('testuser', 'testuser@example.com', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG');
+VALUES
+('testuser', 'testuser@example.com', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG'),
+('leihl', 'psh22xtu@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG'); -- Password 123

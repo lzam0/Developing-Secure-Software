@@ -81,10 +81,12 @@ export class AuthController {
                 sameSite: 'strict',
                 maxAge: 2 * 60 * 60 * 1000 // 2 hours, matches JWT_EXPIRES_IN default
             });
+
+            const { user } = result;
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
-                data: result
+                data: { user }
             });
         }
         catch (error) {
@@ -103,7 +105,8 @@ export class AuthController {
 
             if (token) { 
                 // inside the token ti see the serial number (jti) and its expiry time
-                const decoded = jwt.decode(token); 
+                const decoded = jwt.verify(token, JWT_SECRET);
+                 
                 // check if the token has a serial number and expiry time 
                 // then add it to revoked_token table 
                 if (decoded?.jti && decoded?.exp) { 
