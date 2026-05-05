@@ -12,7 +12,7 @@ export const validateSignUp = (req, res, next) => {
     // DYLAN - DO THIS
     // Implement password validation
     // Implment email validation with regex 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d){8,72}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d])(?!.*['";<>`\\\\]).{8,72}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
     if (!passwordRegex.test(password)) {
