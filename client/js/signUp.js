@@ -34,13 +34,13 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
         grecaptcha.execute('6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb', {action: 'signup'}).then(async (token) => {
             try {
                 // Send a POST request to the backend API for registration
-                        
+                const API_BASE = window.location.origin === "null" ? "http://localhost:5000" : "";
+                
                
-                const response = await fetch(`${BACKEND_URL}/auth/signUp`, {
+                const response = await fetch(`${API_BASE}/auth/signUp`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                "X-CSRF-Token": getCSRFToken()
+                        "Content-Type": "application/json"
                     },
                     credentials: "include",
                     body: JSON.stringify({ 

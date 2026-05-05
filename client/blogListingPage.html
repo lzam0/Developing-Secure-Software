@@ -2,26 +2,18 @@
 <html>
     <head>
         <link rel="stylesheet" href="/styles.css">
-        <script src="/js/verify.js"></script>
-        <script src="/js/blog-listing.js" defer></script>
         <script src="/components/header.js"></script>
         <script src="/components/navbar.js" defer></script>
         <title>Blog list</title>
+        <script src="js/auth.js" defer></script>
     </head>
     <div id="header"></div>
 
     <body>
         <main class="page">
             <div class="page-header">
-                <h1 class="page-heading">Health &amp; Lifestyle Blog Posts</h1>
+                <h1 class="page-heading">Health &amp; Lifestyle Blo Posts</h1>
             </div>
-
-            <div>
-                <a href="/newBlog.html">
-                    <button>New Post</button>
-                </a>
-            </div>
-
             <div class="filter-row">
                 <button class="filter-button active">All</button>
                 <button class="filter-button">Health Support</button>
@@ -29,8 +21,19 @@
                 <button class="filter-button">Mindfulness</button>
                 <button class="filter-button">Sleep &amp; Recovery</button>
             </div>
-            <div class="card-grid" id="card-grid">
-                <p id="loading-msg" style="color:#6b4c3b;font-size:0.95rem;">Loading posts...</p>
+            <div class="card-grid">
+                <a href="/blogPage.html" class="card">
+                    <div class="card-body">
+                        <span class="card-tag">Health Support</span>
+                        <h2 class="card-title">Lorem ipsum dolor sit amet</h2>
+                        <div class="card-meta">
+                            <div class="card-avatar">MC</div>
+                            <span class="card-author">Melissa Carter</span>
+                            <span class="card-dot">·</span>
+                            <span class="card-date">May 2026</span>
+                        </div>
+                    </div>
+                </a>
             </div>
         </main>
     </body>
