@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import pool from '../../controllers/database.js';
 import helmet from 'helmet';
 import { AuthService } from '../../service/auth.service.js';
+import { validateCSRF } from '../../middleware/csrf.middleware.js';
 
 /**
  * Creates a self-contained Express app for security testing.
@@ -110,6 +111,16 @@ export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) 
     // GET /api/protected — generic protected route used in most middleware tests
     app.get('/api/protected', authenticateToken, (req, res) => {
         return res.status(200).json({ success: true, data: 'secret data' });
+    });
+
+    // GET /api/csrf-protected - testing GET route without CSRF token
+    app.get('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({success: true});
+    });
+
+    // POST /api/csrf-protected - protected route using CSRF token validation
+    app.post('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({success: true})
     });
 
     return app;

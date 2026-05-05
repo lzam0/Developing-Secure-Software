@@ -2,6 +2,7 @@
 import { AuthService } from '../service/auth.service.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { issueCSRFToken } from '../middleware/csrf.middleware.js';
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
@@ -22,6 +23,15 @@ export class AuthController {
             }
             // Call the AuthService to handle user registration
             const result = await AuthService.signUp(username, email, password);
+
+            // Set CSRF token as HTTP-only on response
+            res.cookie('csrfToken', issueCSRFToken() , {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000
+            });
+        
             res.status(201).json({
                 success: true,
                 message: result.message,
@@ -81,6 +91,14 @@ export class AuthController {
                 sameSite: 'strict',
                 maxAge: 2 * 60 * 60 * 1000 // 2 hours, matches JWT_EXPIRES_IN default
             });
+            // Set CSRF token as HTTP-only on response
+            res.cookie('csrfToken', issueCSRFToken() , {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000
+            });
+
             res.status(200).json({
                 success: true,
                 message: 'Login successful',
