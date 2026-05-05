@@ -24,4 +24,5 @@ router.post('/signOut', authenticateToken, validateCSRF, authController.signOut.
 /* Protected Routes */
 // Verify token validity — used by the frontend auth guard on page load
 router.get('/verify', authenticateToken, authController.verify.bind(authController));
+router.post('/signOut', authenticateToken, authController.signOut.bind(authController));
 export default router;
