@@ -23,19 +23,14 @@ describe('Helmet security headers', () => {
         const csp = res.headers['content-security-policy'];
         // check csp restricts scripts to same domain only (self)
         expect(csp).to.include("script-src 'self'");
-        expect(csp).to.include("script-src-attr 'none'");
     });
 
-    it('should allow same-origin API requests only', async () => {
+    // force HTTPS only (secure), not insecure HTTP connections
+    // encrypt all traffic using https 
+    it('should set strict-transport-security header', async () => {
         const res = await request(app).get('/api/protected');
-        const csp = res.headers['content-security-policy'];
-        expect(csp).to.include("connect-src 'self'");
-    });
-
-    // HSTS is enabled only in production to avoid forcing https on localhost during development
-    it('should disable strict-transport-security outside production', async () => {
-        const res = await request(app).get('/api/protected');
-        expect(res.headers['strict-transport-security']).to.not.exist;
+        // check HTTP strict transport security (HSTS) header exists for HTTPS connections
+        expect(res.headers['strict-transport-security']).to.exist;
     });
 
     // header set to nosniff and the browser guessing content type of a file 

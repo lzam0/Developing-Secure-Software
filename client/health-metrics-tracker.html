@@ -4,9 +4,6 @@
     <link rel="stylesheet" href="/styles.css">
     <title>Health Metrics Tracker</title>
     <meta charset="utf-8">
-    <script src="/js/verify.js"></script>
-    <script src="/js/auth-guard.js"></script>
-    <script src="/js/health-metrics-tracker.js" defer></script>
     <script src="/components/header.js"></script>
     <script src="/components/navbar.js" defer></script>
 </head>
@@ -18,12 +15,12 @@
 <h1 class="title">Health Metrics Tracker</h1>
 
 <div class="action-bar">
-    <button class="btn add-btn" id="open-modal-button" type="button">+ Add New Metric</button>
+    <button class="btn add-btn" onclick="openModal()">+ Add New Metric</button>
 </div>
 
 <div id="myModal" class="modal">
     <div class="modal-content">
-        <span class="close" id="close-modal-button">&times;</span>
+        <span class="close" onclick="closeModal()">&times;</span>
         <h2>Add Health Metric</h2>
         <form id="entryForm" class="form-group">
             <label for="date">Date:</label>
@@ -63,6 +60,62 @@
     </table>
 </div>
 
+<script>
+    const modal = document.getElementById("myModal");
+    const entryForm = document.getElementById("entryForm");
+    const tableBody = document.getElementById("tableBody");
+
+    function openModal() {
+        modal.style.display = "flex";
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+        entryForm.reset();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) closeModal();
+    }
+
+    entryForm.onsubmit = function(e) {
+        e.preventDefault();
+
+        const entry = {
+            date: document.getElementById("date").value,
+            metric: document.getElementById("metric").value,
+            current: document.getElementById("current").value,
+            goal: document.getElementById("goal").value,
+            notes: document.getElementById("notes").value
+        };
+
+        addTableRow(entry);
+        closeModal();
+    };
+
+    function addTableRow(data) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${data.date}</td>
+            <td><strong>${data.metric}</strong></td>
+            <td>${data.current}</td>
+            <td>${data.goal || '-'}</td>
+            <td><small>${data.notes}</small></td>
+            <td>
+                <button class="delete-btn" onclick="deleteRow(this)">Delete</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    }
+
+    function deleteRow(button) {
+        if (confirm("Remove this metric entry?")) {
+            const row = button.closest("tr");
+            row.style.opacity = "0";
+            setTimeout(() => row.remove(), 300);
+        }
+    }
+</script>
 </body>
 </html>
 

@@ -12,7 +12,7 @@ export const validateSignUp = (req, res, next) => {
     // DYLAN - DO THIS
     // Implement password validation
     // Implment email validation with regex 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d])(?!.*['";<>`\\\\]).{8,72}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d){8,72}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
     if (!passwordRegex.test(password)) {
@@ -31,30 +31,5 @@ export const validateSignUp = (req, res, next) => {
 export const validateSignIn = (req, res, next) => {
     // Accept identifier/email/username for backwards compatibility
     const { identifier, email, username, password } = req.body;
-    next();
-};
-
-const VALID_TAGS = ['Health Support', 'Lifestyle', 'Mindfulness', 'Sleep & Recovery'];
-
-export const validatePost = (req, res, next) => {
-    const { title, tags, content } = req.body;
-
-    if (!title || !tags || !content) {
-        return res.status(400).json({ success: false, message: 'Title, tags, and content are required' });
-    }
-
-    if (typeof title !== 'string' || title.trim().length === 0 || title.length > 255) {
-        return res.status(400).json({ success: false, message: 'Title must be between 1 and 255 characters' });
-    }
-
-    const tagsArray = Array.isArray(tags) ? tags : [tags];
-    if (tagsArray.some(tag => !VALID_TAGS.includes(tag))) {
-        return res.status(400).json({ success: false, message: `Tags must be one of: ${VALID_TAGS.join(', ')}` });
-    }
-
-    if (typeof content !== 'string' || content.trim().length === 0) {
-        return res.status(400).json({ success: false, message: 'Content cannot be empty' });
-    }
-
     next();
 };
