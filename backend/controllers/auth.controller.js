@@ -178,11 +178,16 @@ export class AuthController {
             }
             // tell the browser to delete the token cookie 
             res.clearCookie('token', {
-                httpOnly: true, 
+                httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict'
             });
-            
+            res.clearCookie('csrfToken', {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
+
             res.status(200).json({
                 success: true,
                 message: 'Logout successful'

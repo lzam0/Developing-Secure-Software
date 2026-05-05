@@ -26,10 +26,18 @@ describe('Helmet security headers', () => {
         expect(csp).to.include("script-src-attr 'none'");
     });
 
-    it('should allow same-origin API requests only', async () => {
+    it('should allow same-origin API requests', async () => {
         const res = await request(app).get('/api/protected');
         const csp = res.headers['content-security-policy'];
         expect(csp).to.include("connect-src 'self'");
+    });
+
+    it('should allow the reCAPTCHA scripts required by the login and signup pages', async () => {
+        const res = await request(app).get('/api/protected');
+        const csp = res.headers['content-security-policy'];
+        expect(csp).to.include("script-src 'self' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/");
+        expect(csp).to.include("connect-src 'self' https://www.google.com/recaptcha/");
+        expect(csp).to.include("frame-src https://www.google.com/recaptcha/");
     });
 
     // HSTS is enabled only in production to avoid forcing https on localhost during development

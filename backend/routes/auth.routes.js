@@ -18,11 +18,10 @@ const authLimiter = rateLimit({
 router.post('/signUp', authLimiter, validateSignUp, authController.signUp.bind(authController));
 router.post('/signIn', authLimiter, validateSignIn, authController.signIn.bind(authController));
 router.post('/login', authLimiter, validateSignIn, authController.signIn.bind(authController));
-router.post('/signOut', authenticateToken, validateCSRF, authController.signOut.bind(authController));
 
 
 /* Protected Routes */
 // Verify token validity — used by the frontend auth guard on page load
 router.get('/verify', authenticateToken, authController.verify.bind(authController));
-router.post('/signOut', authenticateToken, authController.signOut.bind(authController));
+router.post('/signOut', authenticateToken, validateCSRF, authController.signOut.bind(authController));
 export default router;
