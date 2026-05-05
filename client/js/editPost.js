@@ -76,7 +76,7 @@ async function savePost() {
     // The server validates ownership (403 if not author) and field format via validatePost middleware.
     const response = await fetch(`${BACKEND_URL}/posts/${postId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": getCSRFToken() },
         credentials: "include",
         body: JSON.stringify({ title, tags, content })
     });

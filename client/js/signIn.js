@@ -1,3 +1,5 @@
+import { issueCSRFToken } from "../../backend/middleware/csrf.middleware";
+
 // Create an event listener for the sign in form submission
 document.getElementById("login_form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -11,7 +13,8 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
         const response = await fetch(`${BACKEND_URL}/auth/signIn`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-CSRF-Token": getCSRFToken()
             },
             // Include cookies in the request
             credentials: "include",

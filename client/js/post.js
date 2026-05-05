@@ -34,7 +34,8 @@ async function publishPost() {
         const response = await fetch(`${BACKEND_URL}/posts`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-CSRF-Token": getCSRFToken()
             },
             credentials: "include",
             body: JSON.stringify({ title, tags, content })

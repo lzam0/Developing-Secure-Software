@@ -195,7 +195,7 @@ export class AuthService {
         * 
         */
 
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d){8,72}$/;
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d])(?!.*['";<>`\\\\]).{8,72}$/;
 
         if (!passwordRegex.test(password)) {
             return false;

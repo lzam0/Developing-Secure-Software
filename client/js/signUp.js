@@ -36,7 +36,8 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
         const response = await fetch(`${BACKEND_URL}/auth/signUp`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-CSRF-Token": getCSRFToken()
             },
             // Include cookies in the request
             credentials: "include",

@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { AuthService } from '../../service/auth.service.js';
 import { sanitiseBody } from '../../middleware/sanitise.middleware.js';
 import { getHelmetConfig } from '../../config/helmet.js';
+import { validateCSRF } from '../../middleware/csrf.middleware.js';
 
 /**
  * Creates a self-contained Express app for security testing.
@@ -107,6 +108,26 @@ export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) 
     app.post('/test/echo', authenticateToken, (req, res) => {
         return res.status(200).json(req.body);
     });
-    
+
+    // GET /api/csrf-protected - testing GET route without CSRF token
+    app.get('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({success: true});
+    });
+
+    // POST /api/csrf-protected - protected route using CSRF token validation
+    app.post('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({success: true})
+    });
+
+    // PUT /api/csrf-protected - state-mutating route for CSRF PUT tests
+    app.put('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({ success: true });
+    });
+
+    // DELETE /api/csrf-protected - state-mutating route for CSRF DELETE tests
+    app.delete('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({ success: true });
+    });
+
     return app;
 }
