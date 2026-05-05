@@ -32,6 +32,7 @@ app.use(cors({
 // Parse JSON/form bodies and cookies before routes need them
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(sanitiseBody);
 app.use(cookieParser());
 
 // Rate Limiting Middleware - apply to all requests
