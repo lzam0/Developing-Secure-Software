@@ -1,13 +1,26 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const fields = ['full_name_input', 'username_input', 'bio_input', 'email_input'];
+document.addEventListener("DOMContentLoaded", async () => {
+    // Fetch real profile data from the backend on page load
+    // credentials: "include" sends the JWT cookie automatically
+    try {
+        const res = await fetch(`${BACKEND_URL}/auth/profile`, {
+            credentials: "include"
+        });
+        if (res.ok) {
+            const { data } = await res.json();
 
-    fields.forEach((id) => {
-        const savedValue = localStorage.getItem(id);
-        const element = document.getElementById(id);
-        if (savedValue && element) {
-            element.value = savedValue;
+            const nameEl     = document.getElementById('full_name_input');
+            const usernameEl = document.getElementById('username_input');
+            const emailEl    = document.getElementById('email_input');
+
+            // Use ?? '' so null values from DB render as empty string, not "null"
+            if (nameEl)     nameEl.value     = data.name     ?? '';
+            if (usernameEl) usernameEl.value = data.username ?? '';
+            if (emailEl)    emailEl.value    = data.email    ?? '';
+            // bio_input intentionally left blank — no bio column in the DB yet
         }
-    });
+    } catch (err) {
+        console.error('Failed to load profile:', err);
+    }
 
     const editButton = document.getElementById('edit_profile_btn');
     const profileInputs = [
@@ -16,45 +29,102 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('bio_input')
     ];
 
-    editButton.addEventListener('click', () => {
+    editButton.addEventListener('click', async () => {
         const isReadOnly = profileInputs[0].hasAttribute('readonly');
 
         if (isReadOnly) {
+            // Switch to edit mode
             profileInputs.forEach((input) => input.removeAttribute('readonly'));
             editButton.innerText = "Save Profile";
             editButton.style.backgroundColor = "#27ae60";
             return;
         }
 
-        profileInputs.forEach((input) => {
-            input.setAttribute('readonly', true);
-            localStorage.setItem(input.id, input.value);
-        });
-        editButton.innerText = "Edit Profile";
-        editButton.style.backgroundColor = "#485b49";
-        alert("Profile Saved locally!");
+        // Save to backend
+        try {
+            const res = await fetch(`${BACKEND_URL}/auth/profile`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCSRFToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    username: document.getElementById('username_input').value,
+                    name:     document.getElementById('full_name_input').value
+                })
+            });
+            if (res.ok) {
+                profileInputs.forEach((input) => input.setAttribute('readonly', true));
+                editButton.innerText = "Edit Profile";
+                editButton.style.backgroundColor = "#485b49";
+                alert("Profile updated successfully!");
+            } else {
+                const err = await res.json();
+                alert(`Failed to update profile: ${err.message}`);
+            }
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            alert("An error occurred. Please try again.");
+        }
     });
 
     const emailInput = document.getElementById('email_input');
-    document.getElementById('update_email_btn').addEventListener('click', () => {
+    document.getElementById('update_email_btn').addEventListener('click', async () => {
         if (emailInput.hasAttribute('readonly')) {
+            // Switch to edit mode
             emailInput.removeAttribute('readonly');
             emailInput.focus();
             emailInput.style.borderColor = "#27ae60";
             return;
         }
 
-        console.log("Sending to Backend via JWT:", { newEmail: emailInput.value });
-        localStorage.setItem('email_input', emailInput.value);
-        alert("Email updated successfully!");
-        emailInput.setAttribute('readonly', true);
-        emailInput.style.borderColor = "#ccc";
+        // Save email to backend
+        try {
+            const res = await fetch(`${BACKEND_URL}/auth/email`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCSRFToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({ email: emailInput.value })
+            });
+            if (res.ok) {
+                alert("Email updated successfully!");
+                emailInput.setAttribute('readonly', true);
+                emailInput.style.borderColor = "#ccc";
+            } else {
+                const err = await res.json();
+                alert(`Failed to update email: ${err.message}`);
+            }
+        } catch (err) {
+            console.error('Error updating email:', err);
+            alert("An error occurred. Please try again.");
+        }
     });
 
-    document.getElementById('delete_account_btn').addEventListener('click', () => {
-        if (confirm("Clear all saved data?")) {
-            localStorage.clear();
-            location.reload();
+    document.getElementById('delete_account_btn').addEventListener('click', async () => {
+        if (!confirm("Are you sure you want to permanently delete your account? This cannot be undone.")) {
+            return;
+        }
+        // Delete account on the backend — cascades to all user data
+        try {
+            const res = await fetch(`${BACKEND_URL}/auth/account`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-Token': getCSRFToken() },
+                credentials: 'include'
+            });
+            if (res.ok) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            } else {
+                const err = await res.json();
+                alert(`Failed to delete account: ${err.message}`);
+            }
+        } catch (err) {
+            console.error('Error deleting account:', err);
+            alert("An error occurred. Please try again.");
         }
     });
 

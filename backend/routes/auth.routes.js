@@ -23,5 +23,13 @@ router.post('/login', authLimiter, validateSignIn, authController.signIn.bind(au
 /* Protected Routes */
 // Verify token validity — used by the frontend auth guard on page load
 router.get('/verify', authenticateToken, authController.verify.bind(authController));
+// Return profile data for the logged-in user — used by account.html on page load
+router.get('/profile', authenticateToken, authController.getProfile.bind(authController));
+// Update name and username
+router.patch('/profile', authenticateToken, validateCSRF, authController.updateProfile.bind(authController));
+// Update email address
+router.patch('/email', authenticateToken, validateCSRF, authController.updateEmail.bind(authController));
+// Delete the logged-in user's account
+router.delete('/account', authenticateToken, validateCSRF, authController.deleteAccount.bind(authController));
 router.post('/signOut', authenticateToken, validateCSRF, authController.signOut.bind(authController));
 export default router;

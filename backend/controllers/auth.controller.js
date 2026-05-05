@@ -1,5 +1,6 @@
 // Auth Controller
 import { AuthService } from '../service/auth.service.js';
+import UserModel from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { issueCSRFToken } from '../middleware/csrf.middleware.js';
@@ -203,6 +204,79 @@ export class AuthController {
      */
     static async verify(req, res) {
         res.status(200).json({ success: true, user: req.user });
+    }
+
+    /**
+     * PATCH /auth/profile
+     * Update the logged-in user's name and username
+     */
+    static async updateProfile(req, res, next) {
+        try {
+            const { username, name } = req.body;
+            await UserModel.updateProfile(req.user.id, { username, name });
+            res.status(200).json({ success: true, message: 'Profile updated successfully' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * PATCH /auth/email
+     * Update the logged-in user's email address
+     */
+    static async updateEmail(req, res, next) {
+        try {
+            const { email } = req.body;
+            await UserModel.updateEmail(req.user.id, email);
+            res.status(200).json({ success: true, message: 'Email updated successfully' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * DELETE /auth/account
+     * Delete the logged-in user's account — cascades to all related data
+     */
+    static async deleteAccount(req, res, next) {
+        try {
+            await UserModel.deleteUser(req.user.id);
+            // Clear the auth and CSRF cookies so the browser session ends
+            res.clearCookie('token', { httpOnly: true, sameSite: 'strict' });
+            res.clearCookie('csrfToken', { sameSite: 'strict' });
+            res.status(200).json({ success: true, message: 'Account deleted successfully' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * GET /auth/profile
+     * Return the logged-in user's profile data for display on account.html
+     */
+    static async getProfile(req, res, next) {
+        try {
+            // req.user.id is set by authenticateToken middleware from the decoded JWT payload
+            const profile = await UserModel.getUserWithProfile(req.user.id);
+
+            if (!profile) {
+                // Shouldn't happen for authenticated users but handled defensively
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
+
+            // Only expose safe fields — never return password or internal fields
+            res.status(200).json({
+                success: true,
+                data: {
+                    username: profile.username,
+                    email:    profile.email,
+                    name:     profile.name ?? null, // null if no profile row exists yet
+                    age:      profile.age  ?? null
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 }
 export default AuthController;
