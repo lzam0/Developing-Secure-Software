@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import authController from '../controllers/auth.controller.js';
 import { validateSignUp, validateSignIn} from '../middleware/validation.middleware.js';
+import { validateCSRF } from '../middleware/csrf.middleware.js';
 import authenticateToken from '../middleware/auth.middleware.js';
 import rateLimit from 'express-rate-limit';
 const router = Router();
@@ -17,6 +18,7 @@ const authLimiter = rateLimit({
 router.post('/signUp', authLimiter, validateSignUp, authController.signUp.bind(authController));
 router.post('/signIn', authLimiter, validateSignIn, authController.signIn.bind(authController));
 router.post('/login', authLimiter, validateSignIn, authController.signIn.bind(authController));
+router.post('/signOut', authenticateToken, validateCSRF, authController.signOut.bind(authController));
 
 
 /* Protected Routes */
