@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 import pool from '../../controllers/database.js';
 import helmet from 'helmet';
 import { AuthService } from '../../service/auth.service.js';
+import { sanitiseBody } from '../../middleware/sanitise.middleware.js';
+import { getHelmetConfig } from '../../config/helmet.js';
+import { validateCSRF } from '../../middleware/csrf.middleware.js';
 
 /**
  * Creates a self-contained Express app for security testing.
@@ -13,22 +16,10 @@ import { AuthService } from '../../service/auth.service.js';
 export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) {
     const app = express();
 
-    app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'"],
-                styleSrc:  ["'self'"],
-                imgSrc: ["'self'", "data:"],
-                connectSrc: ["'self'"],
-                fontSrc: ["'self'"],
-                objectSrc: ["'none'"],
-                frameAncestors: ["'none'"]
-            }
-        }
-    }));
+    app.use(helmet(getHelmetConfig()));
 
     app.use(express.json());
+    app.use(sanitiseBody);
     app.use(cookieParser());
 
     // Inline authenticateToken — uses the test secret, no env var dependency
@@ -110,6 +101,32 @@ export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) 
     // GET /api/protected — generic protected route used in most middleware tests
     app.get('/api/protected', authenticateToken, (req, res) => {
         return res.status(200).json({ success: true, data: 'secret data' });
+    });
+
+    // POST /test/echo - used in sanitisation test 
+    // echoes res.body back to the test to inspect sanitise middleware does
+    app.post('/test/echo', authenticateToken, (req, res) => {
+        return res.status(200).json(req.body);
+    });
+
+    // GET /api/csrf-protected - testing GET route without CSRF token
+    app.get('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({success: true});
+    });
+
+    // POST /api/csrf-protected - protected route using CSRF token validation
+    app.post('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({success: true})
+    });
+
+    // PUT /api/csrf-protected - state-mutating route for CSRF PUT tests
+    app.put('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({ success: true });
+    });
+
+    // DELETE /api/csrf-protected - state-mutating route for CSRF DELETE tests
+    app.delete('/api/csrf-protected', validateCSRF, (req, res) => {
+        return res.status(200).json({ success: true });
     });
 
     return app;
