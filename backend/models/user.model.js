@@ -1,6 +1,15 @@
 import pool from "../controllers/database.js";
 export class UserModel {
     
+    // Find user by userid
+    static async findById(userid) {
+        const result = await pool.query(
+            `SELECT userid AS id, username, email, password, created_at FROM users WHERE userid = $1`,
+            [userid]
+        );
+        return result.rows[0];
+    }
+
     // Find user by email
     static async findByEmail(email) {
         const query = `
@@ -91,6 +100,14 @@ export class UserModel {
         await pool.query(
             'UPDATE users SET email = $2 WHERE userid = $1',
             [userid, email]
+        );
+    }
+
+    // Update password in the users table
+    static async updatePassword(userid, hashedPassword) {
+        await pool.query(
+            'UPDATE users SET password = $2 WHERE userid = $1',
+            [userid, hashedPassword]
         );
     }
 

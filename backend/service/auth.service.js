@@ -66,8 +66,8 @@ export class AuthService {
     // Register a new user
     static async signUp(username, email, password) {
 
-        // Check if user already exists
-        // Check if the email is taken OR if the username is taken
+    // Check if user already exists
+    // Check if the email is taken OR if the username is taken
     const [existingEmail, existingUsername] = await Promise.all([
     UserModel.findByEmail(email),
     UserModel.findByUsername(username)
@@ -205,6 +205,10 @@ export class AuthService {
         return null;
     }
 
+    static async changePassword(userid, newHashedPassword) {
+        await UserModel.updatePassword(userid, newHashedPassword);
+    }
+
     static async hashPassword(password) {
         return await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
     }
@@ -214,11 +218,3 @@ export class AuthService {
     }
 }
 export default AuthService;
-
-// TEST NEED TO REMOVE
-// const testPayload = { id: 1, username: 'testuser'};
-// const result = generateToken(testPayload);
-
-// console.log("1. Token string created:", result.token.substring(0, 20));
-// console.log("2. Unique jti generated:", result.jti);
-// console.log("3. Expiry date calculated", result.expiresAt.toLocaleString());

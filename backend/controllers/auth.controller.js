@@ -212,7 +212,15 @@ export class AuthController {
      */
     static async updateProfile(req, res, next) {
         try {
+            // Only allow updating username and name, not email or password here
             const { username, name } = req.body;
+
+            // check if current username and name is not the same as the new username and name
+            if (username === req.user.username && name === req.user.name) {
+                return res.status(400).json({ success: false, message: 'No changes detected in profile information' });
+            }
+
+            // Call the UserModel to update the user's profile information in the database
             await UserModel.updateProfile(req.user.id, { username, name });
             res.status(200).json({ success: true, message: 'Profile updated successfully' });
         } catch (error) {
@@ -226,7 +234,15 @@ export class AuthController {
      */
     static async updateEmail(req, res, next) {
         try {
+            // Only allow updating email, not username or name here
             const { email } = req.body;
+
+            // check if current email is the same as the new email
+            if (email === req.user.email) {
+                return res.status(400).json({ success: false, message: 'New email address must be different from current email' });
+            }
+
+            // Call the UserModel to update the user's email in the database
             await UserModel.updateEmail(req.user.id, email);
             res.status(200).json({ success: true, message: 'Email updated successfully' });
         } catch (error) {
@@ -240,6 +256,7 @@ export class AuthController {
      */
     static async deleteAccount(req, res, next) {
         try {
+            // Call the UserModel to delete the user's account from the database, which should also cascade and delete all related data (e.g., profile, posts, comments)
             await UserModel.deleteUser(req.user.id);
             // Clear the auth and CSRF cookies so the browser session ends
             res.clearCookie('token', { httpOnly: true, sameSite: 'strict' });
@@ -251,7 +268,7 @@ export class AuthController {
     }
 
     /**
-     * GET /auth/profile
+     * PATCH /auth/profile
      * Return the logged-in user's profile data for display on account.html
      */
     static async getProfile(req, res, next) {
@@ -274,6 +291,68 @@ export class AuthController {
                     age:      profile.age  ?? null
                 }
             });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * PATCH /auth/password
+     * Change the logged-in user's password, requires current password for confirmation
+     *
+     * 1. Check if password fields are present
+     * 2. Check if currentPassword is correct by comparing with the hashed password in the database
+     * 3. Check if the new password is different from the current password and meets complexity requirements
+     * 4. Hash the new password and update it in the database, then revoke the current session
+     */
+    static async changePassword(req, res, next) {
+        try {
+            const { currentPassword, newPassword } = req.body;
+
+            // 1. Check if password fields are present
+            if (!currentPassword || !newPassword) {
+                return res.status(400).json({ success: false, message: 'Current and new password are required' });
+            }
+
+            // 2. Fetch stored hash and verify currentPassword against it
+            const user = await UserModel.findById(req.user.id);
+
+            // Check if password is correct using the AuthService's verifyPassword method, which handles hashing and pepper
+            const isCurrentPasswordValid = await AuthService.verifyPassword(currentPassword, user.password);
+
+            if (!isCurrentPasswordValid) {
+                return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+            }
+
+            // 3. Reject if new password is the same, then validate complexity
+            if (currentPassword === newPassword) {
+                return res.status(400).json({ success: false, message: 'New password must be different from current password' });
+            }
+
+            // Check if the new password meets complexity requirements (e.g., length, character types)
+            if (!AuthService.validatePassword(newPassword)) {
+                return res.status(400).json({ success: false, message: 'New password does not meet complexity requirements' });
+            }
+
+            // 4. Hash and update, then revoke current JWT so all sessions are invalidated
+            const hashedNewPassword = await AuthService.hashPassword(newPassword);
+            await AuthService.changePassword(req.user.id, hashedNewPassword);
+
+            // Revoke the current token by adding its jti to the revoked_tokens table, so it can no longer be used
+            const token = req.cookies?.token;
+            if (token) {
+                const decoded = jwt.verify(token, JWT_SECRET);
+
+                // Check if the token has a jti and exp, then revoke it so it can't be used again after the password change
+                if (decoded?.jti && decoded?.exp) {
+                    await AuthService.revokeToken(decoded.jti, req.user.id, new Date(decoded.exp * 1000));
+                }
+            }
+
+            // Clear the auth and CSRF cookies to log the user out of all sessions, including the current one with the old password
+            res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+            res.clearCookie('csrfToken', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+            res.status(200).json({ success: true, message: 'Password changed successfully. Please sign in again.' });
         } catch (error) {
             next(error);
         }

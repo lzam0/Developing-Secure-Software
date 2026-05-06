@@ -147,25 +147,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
-    savePasswordButton.addEventListener('click', () => {
-        const current = document.getElementById('password_input').value;
-        const next = document.getElementById('new_password_input').value;
-        const confirm = document.getElementById('confirm_password_input').value;
-        const actualSavedPassword = localStorage.getItem('password_input') || 'user123';
+    savePasswordButton.addEventListener('click', async () => {
+        const currentPassword = document.getElementById('password_input').value;
+        const newPassword = document.getElementById('new_password_input').value;
+        const confirmPassword = document.getElementById('confirm_password_input').value;
 
-        if (current !== actualSavedPassword) {
-            alert("Error 403: Current password incorrect.");
+        if (newPassword !== confirmPassword) {
+            alert("New passwords do not match.");
             return;
         }
 
-        if (next !== confirm || next === "") {
-            alert("New passwords must match and cannot be empty.");
-            return;
-        }
+        try {
+            const res = await fetch(`${BACKEND_URL}/auth/password`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCSRFToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
 
-        console.log("Sending to Backend via JWT:", { newPass: next });
-        localStorage.setItem('password_input', next);
-        alert("Password updated successfully!");
-        cancelPasswordButton.click();
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(data.message || 'Failed to change password.');
+                return;
+            }
+
+            // Server revoked the session — redirect to login
+            window.location.href = '/login.html';
+        } catch (err) {
+            console.error('Error changing password:', err);
+            alert("An error occurred. Please try again.");
+        }
     });
 });
