@@ -1,9 +1,17 @@
 
+/**
+ * Changes the user's password.
+ * 
+ * This file contains the logic for handling password changes on the client side. 
+ * It is called from account.js when the user submits a password change request.
+ */
+async function changePassword(currentPassword, newPassword, confirmPassword) {
 
-async function changePassword() {
-    const currentPassword = document.getElementById('current_password_input').value;
-    const newPassword = document.getElementById('new_password_input').value;
-    const confirmPassword = document.getElementById('confirm_password_input').value;
+    // Basic client-side validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        alert("Please fill in all password fields.");
+        return;
+    }
 
     // Client-side validation for new password and confirmation match
     if (newPassword !== confirmPassword) {
@@ -34,7 +42,5 @@ async function changePassword() {
         // Error Message
         console.error('Error changing password:', err);
         alert("An error occurred. Please try again.");
-        return;
     }
-
-};
+}

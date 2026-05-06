@@ -128,17 +128,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
+    //===================================================================================================
+    // Password change logic
+
+    // Show/hide password change area and handle save/cancel actions
     const passwordArea = document.getElementById('password_change_area');
     const changePasswordButton = document.getElementById('change_password_btn');
     const cancelPasswordButton = document.getElementById('cancel_password_btn');
     const savePasswordButton = document.getElementById('save_password_btn');
 
+    // Event listeners for password change buttons
     changePasswordButton.addEventListener('click', () => {
         passwordArea.style.display = 'block';
         changePasswordButton.style.display = 'none';
         document.getElementById('password_input').value = '';
     });
 
+    // Reset password fields and hide area on cancel
     cancelPasswordButton.addEventListener('click', () => {
         passwordArea.style.display = 'none';
         changePasswordButton.style.display = 'block';
@@ -147,39 +153,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
+    // Handle password change submission
     savePasswordButton.addEventListener('click', async () => {
         const currentPassword = document.getElementById('password_input').value;
         const newPassword = document.getElementById('new_password_input').value;
         const confirmPassword = document.getElementById('confirm_password_input').value;
 
-        if (newPassword !== confirmPassword) {
-            alert("New passwords do not match.");
-            return;
-        }
-
-        try {
-            const res = await fetch(`${BACKEND_URL}/auth/password`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': getCSRFToken()
-                },
-                credentials: 'include',
-                body: JSON.stringify({ currentPassword, newPassword })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                alert(data.message || 'Failed to change password.');
-                return;
-            }
-
-            // Server revoked the session — redirect to login
-            window.location.href = '/login.html';
-        } catch (err) {
-            console.error('Error changing password:', err);
-            alert("An error occurred. Please try again.");
-        }
+        // Call function within edit-password.js to handle password change process
+        await changePassword(currentPassword, newPassword, confirmPassword);
     });
 });
