@@ -34,11 +34,13 @@ export class AuthController {
         }
 
         const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+
         const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 
         // Verify with Google
         const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
         const recaptchaData = await recaptchaRes.json();
+
 
         // Check Google's score
         if (!recaptchaData.success || recaptchaData.score < 0.5) {
@@ -48,6 +50,8 @@ export class AuthController {
             });
         }
         console.log("Recaptcha Data from Google:", recaptchaData);
+
+        
 
         // If the reCAPTCHA passed, call the AuthService to handle user registration
         const result = await AuthService.signUp(username, email, password);
@@ -74,25 +78,28 @@ export class AuthController {
         req.session.userId = result.user.id;
         req.session.otpPurpose = 'signup';
 
-        await EmailController.sendSignUpOtpEmail(result.user.email, otp, result.user.username);
+        await EmailController.sendSignUpOtpEmail(
+            result.user.email,
+            otp,
+            result.user.username
+        );
                 
         return res.status(201).json({
             success: true,
             message: result.message,
             data: result
         });
-        
-
-            // Set CSRF token as HTTP-only on response
-            res.cookie('csrfToken', issueCSRFToken() , {
-                httpOnly: false,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 2 * 60 * 60 * 1000
-            });
+         // Set CSRF token as HTTP-only on response
+        res.cookie('csrfToken', issueCSRFToken() , {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 2 * 60 * 60 * 1000
+        });
         
     }
     catch (error) {
+        console.error("sign up call error:", error);
         next(error);
     }
 }

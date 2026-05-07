@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import UserModel from '../models/user.model.js';
 import dotenv from 'dotenv';
 import { randomUUID } from 'crypto';
@@ -40,9 +41,9 @@ function generateToken(payload) {
     const jti = randomUUID(); // create unique jti for every jwt token
     // create the token
     // takes the user's info and hides the jti inside it, locked using JWT_WEB_TOKEN_SECRET
-    const token = jwt.sign({ ...payload, jti }, JWT_WEB_TOKEN_SECRET, { expiresIn: JWT_EXPIRES_IN }); 
+    const token = jwt.sign({ ...payload, jti }, process.env.JWT_WEB_TOKEN_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN }); 
     // calculate when token will expire
-    const expiresAt = new Date(Date.now() + parseDurationMs(JWT_EXPIRES_IN));
+    const expiresAt = new Date(Date.now() + parseDurationMs(process.env.JWT_EXPIRES_IN));
     return { token, jti, expiresAt }; // return for sign-in process
 }
 
@@ -101,10 +102,7 @@ export class AuthService {
         // Create the user
         const newUser = await UserModel.create(username, email, hashedPassword);
         await addJitter(); // add random delay to make timing attacks harder
-        
-        // Generate JWT token for the new user
-        const { token } = generateToken({ id: newUser.id, username: newUser.username });
-        
+                
         // userID, username, email, token SHOULD ONLY BE RETURNED IN THE SIGN IN, NOT SIGN UP. IN SIGN UP, WE WANT TO RETURN A GENERIC SUCCESS MESSAGE TO PREVENT ACCOUNT ENUMERATION
             return {
         message: 'A verification email has been sent to your email address. Please check your inbox and follow the instructions to complete your registration.',
