@@ -6,36 +6,40 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
     const username = document.getElementById("username_input").value;
     const password = document.getElementById("password_input").value;
 
-    // Send a POST request to the backend API for authentication
-    try {
-        const API_BASE = window.location.origin === "null" ? "http://localhost:5050" : "";
-        const response = await fetch(`${API_BASE}/auth/signIn`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            // Include cookies in the request
-            credentials: "include",
+    grecaptcha.ready(function () {
+        grecaptcha.execute('6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb', {action: 'login'}).then(async (token) => {
+            // Send a POST request to the backend API for authentication
+            try {
+                const response = await fetch(`${BACKEND_URL}/auth/signIn`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": getCSRFToken()
+                    },
+                    // Include cookies in the request
+                    credentials: "include",
 
-            // Send the username and password as JSON in the request body
-            body: JSON.stringify({ username, password })
+                    // Send the username and password as JSON in the request body
+                    body: JSON.stringify({ username, password, captchaToken: token })
+                });
+
+                if(response.ok) {
+                    // If login is successful, redirect
+                    window.location.href = "2fa.html";
+                } else {
+                    // If login fails, show an error message
+                    const errorData = await response.json();
+                    alert(`Login failed: ${errorData.message}`);
+                }
+
+            } catch (error) {
+                // Error Message
+                console.error("Error during login:", error?.message || String(error));
+                alert("An error occurred during login. Please try again.");
+                return;
+            }
         });
-
-        if(response.ok) {
-            // If login is successful, redirect
-            window.location.href = "2fa.html";
-        } else {
-            // If login fails, show an error message
-            const errorData = await response.json();
-            alert(`Login failed: ${errorData.message}`);
-        }
-
-    } catch (error) {
-        // Error Message
-        console.error("Error during login:", error?.message || String(error));
-        alert("An error occurred during login. Please try again.");
-        return;
-    }
+    });
 });
 
 /* To ensure that users cannot use network phising tools to steal credentials, we can implement the following measures:

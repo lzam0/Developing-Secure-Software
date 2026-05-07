@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
+         <link rel="stylesheet" href="/styles.css">
         <title>Health and Lifestyle Blog - Medication Tracker</title>
         <meta charset="utf-8">
+        <script src="/js/verify.js"></script>
+        <script src="/js/auth-guard.js"></script>
+        <script src="/js/medication-tracker.js" defer></script>
+        <script src="/components/header.js"></script>
+        <script src="/components/navbar.js" defer></script>
        
     </head>
+     <div id="header"></div>
     <body>
-<nav class="navbar">
-    <a href="/index.html">Home</a>
-    <a href="/healthdiary.html" class="current">Diary</a>
-    <a href="/blogListingPage.html">Blogs</a>
-</nav>
+
+       
+
 
 <h1 class="title">Medication/Supplement Tracker</h1>
 
 <div class="action-bar">
-    <button class="btn add-btn" onclick="openModal()">+ Add New Entry</button>
+    <button class="btn add-btn" id="open-modal-button" type="button">+ Add New Entry</button>
 </div>
 
 <div class="table-container"> 
@@ -36,7 +41,7 @@
 
 <div id="myModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <span class="close" id="close-modal-button">&times;</span>
         <h2>Add Medication/Supplement</h2>
         <form id="entryForm" class="form-group">
             <label for="date">Date:</label>
@@ -59,69 +64,6 @@
     </div>
 </div>
 
-<script>
-const modal = document.getElementById("myModal");
-const entryForm = document.getElementById("entryForm");
-const tableBody = document.getElementById("tableBody");
-
-// pen/Close modal functions
-function openModal() {
-    modal.style.display = "flex";
-}
-
-function closeModal() {
-    modal.style.display = "none";
-    entryForm.reset();
-}
-
-// close modal if user clicks outside of it
-window.onclick = (event) => {
-    if (event.target == modal) closeModal();
-}
-
-// handle Form Submission
-entryForm.onsubmit = function(e) {
-    e.preventDefault();
-
-    const entry = {
-        date: document.getElementById("date").value,
-        medication: document.getElementById("medication").value,
-        dosage: document.getElementById("dosage").value,
-        frequency: document.getElementById("frequency").value,
-        notes: document.getElementById("notes").value
-    };
-
-    addTableRow(entry);
-    closeModal();
-};
-
-// create Table Row Function
-function addTableRow(data) {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-        <td>${data.date}</td>
-        <td>${data.medication}</td>
-        <td>${data.dosage}</td>
-        <td>${data.frequency}</td>
-        <td><small>${data.notes}</small></td>
-        <td>
-            <button class="delete-btn" onclick="deleteRow(this)">Delete</button>
-        </td>
-    `;
-
-    tableBody.appendChild(row);
-}
-
-// delete Row Function
-function deleteRow(button) {
-    if (confirm("Are you sure you want to remove this entry?")) {
-        const row = button.closest("tr");
-        row.style.opacity = "0"; // fade out effect
-        setTimeout(() => row.remove(), 300);
-    }
-}
-</script>
     </body>
 </html>
 
@@ -139,23 +81,6 @@ body {
         font-family: 'Arial', sans-serif;
         color: #333;
     }
-
-.navbar {
-    background-color: #fff;
-    padding: 1rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: center;
-}
-
-.navbar a {
-    margin: 0 20px;
-    text-decoration: none;
-    color: #666;
-    font-weight: 500;
-}
-
-.navbar a.current { color: #4CAF50; border-bottom: 2px solid #4CAF50; }
 
 
 .table-container {

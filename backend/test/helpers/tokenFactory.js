@@ -4,8 +4,13 @@ export const TEST_SECRET = 'test-secret-for-testing-only';
 export const WRONG_SECRET = 'attacker-controlled-secret-xyz';
 
 /** Correctly signed token using the test secret. */
+// export function validToken(payload = { id: 1, username: 'testuser' }, options = {}) {
+//     return jwt.sign(payload, TEST_SECRET, { expiresIn: '2h', ...options });
+// }
+
 export function validToken(payload = { id: 1, username: 'testuser' }, options = {}) {
-    return jwt.sign(payload, TEST_SECRET, { expiresIn: '2h', ...options });
+    const finalPayload = { jti: 'test-jti-123', ...payload };
+    return jwt.sign(finalPayload, TEST_SECRET, { expiresIn: '2h', ...options });
 }
 
 /** Token signed with an attacker-controlled secret — simulates stolen/forged token. */
@@ -52,7 +57,7 @@ export function emptySignatureToken() {
 /** Validly signed token whose exp claim is 1 hour in the past. */
 export function expiredToken() {
     return jwt.sign(
-        { id: 1, username: 'testuser', exp: Math.floor(Date.now() / 1000) - 3600 },
+        { id: 1, username: 'testuser', jti: 'expired-jti-123', exp: Math.floor(Date.now() / 1000) - 3600 },
         TEST_SECRET
     );
 }
@@ -60,7 +65,7 @@ export function expiredToken() {
 /** Validly signed token with only 30 seconds remaining — should still be accepted. */
 export function nearExpiryToken() {
     return jwt.sign(
-        { id: 1, username: 'testuser', exp: Math.floor(Date.now() / 1000) + 30 },
+        { id: 1, username: 'testuser', jti: 'near-expiry-jti-123', exp: Math.floor(Date.now() / 1000) + 30 },
         TEST_SECRET
     );
 }

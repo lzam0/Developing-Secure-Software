@@ -3,6 +3,14 @@
   "private": true,
   "scripts": {
     "db": "npm --prefix backend run db"
+  },
+  "devDependencies": {
+    "chai": "^6.2.2",
+    "mocha": "^11.7.5",
+    "supertest": "^7.2.2"
+  },
+  "dependencies": {
+    "express-rate-limit": "^8.3.2",
+    "puppeteer": "^24.42.0"
   }
 }
-

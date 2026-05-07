@@ -1,64 +1,101 @@
 // Auth Controller
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { AuthService } from '../service/auth.service.js';
 import OtpModel from '../models/otp.model.js';
 import UserModel from '../models/user.model.js';
 import EmailController from './email.controller.js';
+import dotenv from 'dotenv';
+import { issueCSRFToken } from '../middleware/csrf.middleware.js';
+
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
 
 export class AuthController {
     /**
  * POST /api/auth/signup
  * Sign Up a new user
  */
-    static async signUp(req, res, next) {
-        try {
-            console.log("SIGN UP CALL")
-            //  Extract username, email, and password from request body
-            const { username, email, password } = req.body;
-            // Validate Input
-            if (!username || !email || !password) {
-                return res.status(400).json({ message: "All fields are required" });
-            }
-            // Call the AuthService to handle user registration
-            const result = await AuthService.signUp(username, email, password);
+  static async signUp(req, res, next) {
+    try {
+        console.log("SIGN UP CALL")
 
-            // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the username/email already exists
-            if (!result.user) {
-                return res.status(201).json({
-                    success: true,
-                    message: result.message,
-                    data: {
-                        status: result.status
-                    }
-                });
-            }
+        const { username, email, password, captchaToken } = req.body;
 
-            // Generate signup verification OTP
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        // Validate Input
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
 
-            await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
-            await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
+        if (!captchaToken) {
+            return res.status(400).json({ message: "Security check missing. Please refresh." });
+        }
 
-            req.session.userId = result.user.id;
-            req.session.otpPurpose = 'signup';
+        const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 
-            await EmailController.sendSignUpOtpEmail(result.user.email, otp, result.user.username);
-                
+        // Verify with Google
+        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+        const recaptchaData = await recaptchaRes.json();
+
+        // Check Google's score
+        if (!recaptchaData.success || recaptchaData.score < 0.5) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
+            });
+        }
+        console.log("Recaptcha Data from Google:", recaptchaData);
+
+        // If the reCAPTCHA passed, call the AuthService to handle user registration
+        const result = await AuthService.signUp(username, email, password);
+
+        // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the username/email already exists
+        if (!result.user) {
             return res.status(201).json({
                 success: true,
                 message: result.message,
-                data: result
+                data: {
+                    status: result.status
+                }
             });
         }
-        catch (error) {
-            // Pass error to error handling middleware
-            console.error(error);
-            next(error);
-        }
+
+        // Generate signup verification OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
+        await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
+
+        req.session.userId = result.user.id;
+        req.session.otpPurpose = 'signup';
+
+        await EmailController.sendSignUpOtpEmail(result.user.email, otp, result.user.username);
+                
+        return res.status(201).json({
+            success: true,
+            message: result.message,
+            data: result
+        });
+        
+
+            // Set CSRF token as HTTP-only on response
+            res.cookie('csrfToken', issueCSRFToken() , {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000
+            });
+        
     }
+    catch (error) {
+        next(error);
+    }
+}
     /**
  * POST /api/auth/signin
  * Sign In an existing user
@@ -66,7 +103,7 @@ export class AuthController {
     static async signIn(req, res, next) {
         try {
             // Extract identifier (email or username) and password from request body
-            const { identifier, email, username, password } = req.body;
+            const { identifier, username, email, password, captchaToken } = req.body;
             const loginIdentifier = identifier || email || username;
             // Validate Input
             if (!loginIdentifier || !password) {
@@ -76,33 +113,54 @@ export class AuthController {
                 });
                 return;
             }
-            // Call the AuthService to handle user authentication
-            const result = await AuthService.signIn(loginIdentifier, password);
 
-            // Generate login 2FA OTP
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
-            const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+            
+        if (!captchaToken) {
+            return res.status(400).json({ message: "Security check missing. Please refresh." });
+        }
 
-            await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
-            await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
+        const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 
-            req.session.userId = result.user.id;
-            req.session.otpPurpose = 'signin';
+        // Verify with Google
+        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+        const recaptchaData = await recaptchaRes.json();
 
-            await EmailController.sendSignInOtpEmail(result.user.email, otp, result.user.username);
-
-            return res.status(200).json({
-                success: true,
-                message: 'Verification code sent to email.'
+        // Check Google's score
+        if (!recaptchaData.success || recaptchaData.score < 0.5) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
             });
+        }
+        console.log("Recaptcha Data from Google:", recaptchaData);
+        
+        // Call the AuthService to handle user authentication
+        const result = await AuthService.signIn(loginIdentifier, password);
 
+        // Generate login 2FA OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+        await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
+        await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
+
+        req.session.userId = result.user.id;
+        req.session.otpPurpose = 'signin';
+
+        await EmailController.sendSignInOtpEmail(result.user.email, otp, result.user.username);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Verification code sent to email.'
+        });
         }
-        catch (error) {
-            // Pass error to error handling middleware
-            console.error(error);
-            next(error);
-        }
+    catch (error) {
+        // Pass error to error handling middleware
+        console.error(error);
+        next(error);
+    }
     }
 
     static async verifyOtp(req, res, next) {
@@ -170,10 +228,17 @@ export class AuthController {
         }
 
         if (req.session.otpPurpose === 'signin') {
+            const jti = crypto.randomUUID();
+
             const token = jwt.sign(
-                { id: req.session.userId },
+                {
+                    id: req.session.userId,
+                    jti
+                },
                 process.env.JWT_WEB_TOKEN_SECRET,
-                { expiresIn: process.env.JWT_EXPIRES_IN || '2h' }
+                {
+                    expiresIn: process.env.JWT_EXPIRES_IN || '2h'
+                }
             );
 
             res.cookie('token', token, {
@@ -207,13 +272,43 @@ export class AuthController {
  * POST /api/auth/signout
  * Sign Out the user by clearing the token cookie
  */
-    static async signOut(req, res) {
-        // Clear the token cookie off browser
-        res.clearCookie('token');
-        res.status(200).json({
-            success: true,
-            message: 'Logout successful'
-        });
+    static async signOut(req, res, next) {
+        try {
+            // read the current token (JWT) from the cookie
+            const token = req.cookies?.token
+
+            if (token) { 
+                // inside the token ti see the serial number (jti) and its expiry time
+                const decoded = jwt.verify(token, JWT_SECRET);
+
+                // check if the token has a serial number and expiry time 
+                // then add it to revoked_token table 
+                if (decoded?.jti && decoded?.exp) { 
+                    // convert number to a date 
+                    const expiresAt = new Date(decoded.exp * 1000); 
+                    // tell the database to blacklist this specific jti
+                    await AuthService.revokeToken(decoded.jti, decoded.id, expiresAt); 
+                }
+            }
+            // tell the browser to delete the token cookie 
+            res.clearCookie('token', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
+            res.clearCookie('csrfToken', {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Logout successful'
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
     /**
@@ -222,6 +317,158 @@ export class AuthController {
      */
     static async verify(req, res) {
         res.status(200).json({ success: true, user: req.user });
+    }
+
+    /**
+     * PATCH /auth/profile
+     * Update the logged-in user's name and username
+     */
+    static async updateProfile(req, res, next) {
+        try {
+            // Only allow updating username and name, not email or password here
+            const { username, name } = req.body;
+
+            // check if current username and name is not the same as the new username and name
+            if (username === req.user.username && name === req.user.name) {
+                return res.status(400).json({ success: false, message: 'No changes detected in profile information' });
+            }
+
+            // Call the UserModel to update the user's profile information in the database
+            await UserModel.updateProfile(req.user.id, { username, name });
+            res.status(200).json({ success: true, message: 'Profile updated successfully' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * PATCH /auth/email
+     * Update the logged-in user's email address
+     */
+    static async updateEmail(req, res, next) {
+        try {
+            // Only allow updating email, not username or name here
+            const { email } = req.body;
+
+            // check if current email is the same as the new email
+            if (email === req.user.email) {
+                return res.status(400).json({ success: false, message: 'New email address must be different from current email' });
+            }
+
+            // Call the UserModel to update the user's email in the database
+            await UserModel.updateEmail(req.user.id, email);
+            res.status(200).json({ success: true, message: 'Email updated successfully' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * DELETE /auth/account
+     * Delete the logged-in user's account — cascades to all related data
+     */
+    static async deleteAccount(req, res, next) {
+        try {
+            // Call the UserModel to delete the user's account from the database, which should also cascade and delete all related data (e.g., profile, posts, comments)
+            await UserModel.deleteUser(req.user.id);
+            // Clear the auth and CSRF cookies so the browser session ends
+            res.clearCookie('token', { httpOnly: true, sameSite: 'strict' });
+            res.clearCookie('csrfToken', { sameSite: 'strict' });
+            res.status(200).json({ success: true, message: 'Account deleted successfully' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * PATCH /auth/profile
+     * Return the logged-in user's profile data for display on account.html
+     */
+    static async getProfile(req, res, next) {
+        try {
+            // req.user.id is set by authenticateToken middleware from the decoded JWT payload
+            const profile = await UserModel.getUserWithProfile(req.user.id);
+
+            if (!profile) {
+                // Shouldn't happen for authenticated users but handled defensively
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
+
+            // Only expose safe fields — never return password or internal fields
+            res.status(200).json({
+                success: true,
+                data: {
+                    username: profile.username,
+                    email:    profile.email,
+                    name:     profile.name ?? null, // null if no profile row exists yet
+                    age:      profile.age  ?? null
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * PATCH /auth/password
+     * Change the logged-in user's password, requires current password for confirmation
+     *
+     * 1. Check if password fields are present
+     * 2. Check if currentPassword is correct by comparing with the hashed password in the database
+     * 3. Check if the new password is different from the current password and meets complexity requirements
+     * 4. Hash the new password and update it in the database, then revoke the current session
+     */
+    static async changePassword(req, res, next) {
+        try {
+            const { currentPassword, newPassword } = req.body;
+
+            // 1. Check if password fields are present
+            if (!currentPassword || !newPassword) {
+                return res.status(400).json({ success: false, message: 'Current and new password are required' });
+            }
+
+            // 2. Fetch stored hash and verify currentPassword against it
+            const user = await UserModel.findById(req.user.id);
+
+            // Check if password is correct using the AuthService's verifyPassword method, which handles hashing and pepper
+            const isCurrentPasswordValid = await AuthService.verifyPassword(currentPassword, user.password);
+
+            if (!isCurrentPasswordValid) {
+                return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+            }
+
+            // 3. Reject if new password is the same, then validate complexity
+            if (currentPassword === newPassword) {
+                return res.status(400).json({ success: false, message: 'New password must be different from current password' });
+            }
+
+            // Check if the new password meets complexity requirements (e.g., length, character types)
+            if (!AuthService.validatePassword(newPassword)) {
+                return res.status(400).json({ success: false, message: 'New password does not meet complexity requirements' });
+            }
+
+            // 4. Hash and update, then revoke current JWT so all sessions are invalidated
+            const hashedNewPassword = await AuthService.hashPassword(newPassword);
+            await AuthService.changePassword(req.user.id, hashedNewPassword);
+
+            // Revoke the current token by adding its jti to the revoked_tokens table, so it can no longer be used
+            const token = req.cookies?.token;
+            if (token) {
+                const decoded = jwt.verify(token, JWT_SECRET);
+
+                // Check if the token has a jti and exp, then revoke it so it can't be used again after the password change
+                if (decoded?.jti && decoded?.exp) {
+                    await AuthService.revokeToken(decoded.jti, req.user.id, new Date(decoded.exp * 1000));
+                }
+            }
+
+            // Clear the auth and CSRF cookies to log the user out of all sessions, including the current one with the old password
+            res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+            res.clearCookie('csrfToken', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+            res.status(200).json({ success: true, message: 'Password changed successfully. Please sign in again.' });
+        } catch (error) {
+            next(error);
+        }
     }
 }
 export default AuthController;

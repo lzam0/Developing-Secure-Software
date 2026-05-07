@@ -1,6 +1,9 @@
 import bcrypt from 'bcrypt';
 import UserModel from '../models/user.model.js';
 import dotenv from 'dotenv';
+import { randomUUID } from 'crypto';
+import pool from '../controllers/database.js';
+
 import {randomInt} from 'crypto';
 import rateLimit from 'express-rate-limit';
 dotenv.config();
@@ -18,6 +21,30 @@ if (!process.env.PEPPER) {
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10);
 const PEPPER = process.env.PEPPER;
 
+// Helper function to generate token
+// function generateToken(payload) {
+//     return jwt.sign(payload, JWT_WEB_TOKEN_SECRET, { expiresIn: JWT_EXPIRES_IN });
+// }
+
+// convert a duration string into milliseconds
+// needed for the timestamp in the revoked_tokens table to know when a token is expired
+function parseDurationMs(duration) { // calculate the expires_at timestamp stored in the datavase + revoked jti
+    const units = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }; // milliseconds per unit (minute, hour, day)
+    const match = String(duration).match(/^(\d+)([smhd])$/); // regex - ^(\d+) (number (2)), ([smhd])$ (unit (h)) 
+    if (!match) return 2 * 3_600_000;
+    return parseInt(match[1], 10) * units[match[2]]; // multiply number by unit value 
+}
+
+// helper function to generate token  
+function generateToken(payload) {
+    const jti = randomUUID(); // create unique jti for every jwt token
+    // create the token
+    // takes the user's info and hides the jti inside it, locked using JWT_WEB_TOKEN_SECRET
+    const token = jwt.sign({ ...payload, jti }, JWT_WEB_TOKEN_SECRET, { expiresIn: JWT_EXPIRES_IN }); 
+    // calculate when token will expire
+    const expiresAt = new Date(Date.now() + parseDurationMs(JWT_EXPIRES_IN));
+    return { token, jti, expiresAt }; // return for sign-in process
+}
 
 //add jitter to response time
     async function addJitter() {
@@ -31,8 +58,8 @@ export class AuthService {
     // Register a new user
     static async signUp(username, email, password) {
 
-        // Check if user already exists
-        // Check if the email is taken OR if the username is taken
+    // Check if user already exists
+    // Check if the email is taken OR if the username is taken
     const [existingEmail, existingUsername] = await Promise.all([
     UserModel.findByEmail(email),
     UserModel.findByUsername(username)
@@ -75,6 +102,8 @@ export class AuthService {
         const newUser = await UserModel.create(username, email, hashedPassword);
         await addJitter(); // add random delay to make timing attacks harder
         
+        // Generate JWT token for the new user
+        const { token } = generateToken({ id: newUser.id, username: newUser.username });
         
         // userID, username, email, token SHOULD ONLY BE RETURNED IN THE SIGN IN, NOT SIGN UP. IN SIGN UP, WE WANT TO RETURN A GENERIC SUCCESS MESSAGE TO PREVENT ACCOUNT ENUMERATION
             return {
@@ -131,6 +160,20 @@ export class AuthService {
         };
     }
 
+    // blacklist of ids so tokens cannot be used again 
+    static async revokeToken(jti, userID, expiresAt) {
+        // add the tokens unique id (jti) to the revoked_tokens table 
+        await pool.query(
+            `INSERT INTO revoked_tokens (jti, userid, expires_at)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (jti) DO NOTHING`,
+             // $1 - unique serial number (jti) of the token 
+             // $2 - id of the user 
+             // $3 - token expire time 
+             [jti, userID, expiresAt]
+        );
+    }
+    
     // Dylan implement regex into here
     static validateEmail(email){
         /* Validate Email Constraints
@@ -148,7 +191,7 @@ export class AuthService {
 
     static validatePassword(password) {
 
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d])(?!.*['";<>`\\\\]).{8,72}$/;
 
         if (!passwordRegex.test(password)) {
             return false;
@@ -156,6 +199,10 @@ export class AuthService {
             return true;
         }
         return null;
+    }
+
+    static async changePassword(userid, newHashedPassword) {
+        await UserModel.updatePassword(userid, newHashedPassword);
     }
 
     static async hashPassword(password) {
