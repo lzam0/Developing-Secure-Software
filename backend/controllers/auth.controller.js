@@ -13,6 +13,23 @@ dotenv.config();
 
 const JWT_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
 
+function generateOtp() {
+    return crypto.randomInt(100000, 1000000).toString();
+}
+
+async function regenerateSession(req) {
+    if (!req.session?.regenerate) {
+        return;
+    }
+
+    await new Promise((resolve, reject) => {
+        req.session.regenerate((error) => {
+            if (error) reject(error);
+            else resolve();
+        });
+    });
+}
+
 export class AuthController {
     /**
  * POST /api/auth/signup
@@ -68,13 +85,14 @@ export class AuthController {
         }
 
         // Generate signup verification OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = generateOtp();
         const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
         await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
 
+        await regenerateSession(req);
         req.session.userId = result.user.id;
         req.session.otpPurpose = 'signup';
 
@@ -139,13 +157,14 @@ export class AuthController {
         const result = await AuthService.signIn(loginIdentifier, password);
 
         // Generate login 2FA OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = generateOtp();
         const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
         await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
 
+        await regenerateSession(req);
         req.session.userId = result.user.id;
         req.session.otpPurpose = 'signin';
 

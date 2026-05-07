@@ -13,6 +13,7 @@ import session from "express-session";
 import helmet from 'helmet';
 import { sanitiseBody } from "./middleware/sanitise.middleware.js";
 import { getHelmetConfig } from "./config/helmet.js";
+import { requirePendingOtpSession } from "./middleware/otp-session.middleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,14 +38,13 @@ app.use(sanitiseBody);
 app.use(cookieParser());
 
 // Rate Limiting Middleware - apply to all requests
-
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 1000,
+    max: 1000, // 1000 Requests so that we can test at the moment
 });
 app.use(globalLimiter);
 
-// Auth-gated static routes — must come before express.static
+// Auth gated static routes — must come before express.static
 const protectedPages = [
     '/payment.html',
     '/account.html',
@@ -62,11 +62,24 @@ app.use(protectedPages, authenticateToken, (_req, _res, next) => next());
 app.use(express.json());
 app.use(cookieParser());
 
+// name = session ID cookie
+// resave: false - dont save the session again if nothing changed
+// saveUninitialized: false - dont create/save a session for a visitor unless we actually put something in it
 app.use(session({
-    secret: process.env.SESSION_SECRET || "dev_secret",
+    name: 'sid',
+    secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false, // false because local development uses HTTP instead of HTTPS
+        sameSite: 'strict',
+        maxAge: 10 * 60 * 1000 // Session cookie length (10 minutes)
+    }
 }));
+
+// 2FA require pending otp session redirection
+app.get('/2fa.html', requirePendingOtpSession, (_req, _res, next) => next());
 
 // Single static file handler
 app.use(express.static(path.join(__dirname, "../client")));
@@ -80,7 +93,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT;
 
-// Running on PORT http://localhost:5000
+// Running on PORT
 app.listen(PORT, () => {
     console.log(`Server running on port http://localhost:${PORT}`);
 });
