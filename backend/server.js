@@ -20,6 +20,10 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
+if (!process.env.SESSION_SECRET) {
+    throw new Error('FATAL: SESSION_SECRET is not defined in .env file');
+}
+
 // Initialize Express app
 const app = express();
 

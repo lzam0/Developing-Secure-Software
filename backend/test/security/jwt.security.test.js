@@ -165,7 +165,7 @@ describe('JWT Security — Token Replay and Logout', () => {
         // Get a valid token via sign-in
         const loginRes = await request(app)
             .post('/auth/signin')
-            .send({ identifier: 'testuser', password: 'Password123' });
+            .send({ email: 'testuser@example.com', password: 'Password123' });
         const rawCookie = loginRes.headers['set-cookie'][0];
         const cookieForRequest = rawCookie.split(';')[0]; // "token=eyJ..."
 

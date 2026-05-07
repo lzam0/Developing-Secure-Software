@@ -73,7 +73,7 @@ export class AuthController {
         // If the reCAPTCHA passed, call the AuthService to handle user registration
         const result = await AuthService.signUp(username, email, password);
 
-        // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the username/email already exists
+        // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the email/username already exists
         if (!result.user) {
             return res.status(201).json({
                 success: true,
@@ -120,14 +120,14 @@ export class AuthController {
  */
     static async signIn(req, res, next) {
         try {
-            // Extract identifier (email or username) and password from request body
-            const { identifier, username, email, password, captchaToken } = req.body;
-            const loginIdentifier = identifier || email || username;
+            // Extract email and password from request body
+            const { identifier, email, password, captchaToken } = req.body;
+            const loginEmail = email || identifier;
             // Validate Input
-            if (!loginIdentifier || !password) {
+            if (!loginEmail || !password) {
                 res.status(400).json({
                     success: false,
-                    message: 'Username/email and password are required'
+                    message: 'Email and password are required'
                 });
                 return;
             }
@@ -154,7 +154,7 @@ export class AuthController {
         console.log("Recaptcha Data from Google:", recaptchaData);
         
         // Call the AuthService to handle user authentication
-        const result = await AuthService.signIn(loginIdentifier, password);
+        const result = await AuthService.signIn(loginEmail, password);
 
         // Generate login 2FA OTP
         const otp = generateOtp();

@@ -44,7 +44,7 @@ describe('JTI blacklist', () => {
         // sign in to generate a session to get a valid token
         const loginRes = await request(app)
             .post('/auth/signin')
-            .send({ identifier: 'testuser', password: 'Password123'});
+            .send({ email: 'testuser@example.com', password: 'Password123'});
 
         // extract the jwt from the set-cookie header
         const cookie = loginRes.headers['set-cookie'][0].split(';')[0];
@@ -93,4 +93,3 @@ describe('JTI blacklist', () => {
         expect(res.status).to.equal(401);
     });
 });
-

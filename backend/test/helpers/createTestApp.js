@@ -54,10 +54,11 @@ export function createTestApp({ secret = 'test-secret-for-testing-only' } = {}) 
         next();
     };
 
-    // POST /auth/signin — stub: only testuser/Password123 succeeds
+    // POST /auth/signin — stub: only testuser@example.com/Password123 succeeds
     app.post('/auth/signin', (req, res) => {
-        const { identifier, password } = req.body;
-        if (identifier !== 'testuser' || password !== 'Password123') {
+        const loginEmail = req.body.email || req.body.identifier;
+        const { password } = req.body;
+        if (loginEmail !== 'testuser@example.com' || password !== 'Password123') {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
         const jti = `test-session-${Date.now()}`;
