@@ -9,6 +9,7 @@ dotenv.config();
 
 export class UserModel {
 
+    // Helper to get encryption key buffer from environment variable, with validation
     static getEncryptionKey() {
         const key = Buffer.from(process.env.ENCRYPTION_KEY || '', 'hex');
         if (key.length !== 32) {
@@ -17,10 +18,13 @@ export class UserModel {
         return key;
     }
 
+    // Normalize email by trimming whitespace and converting to lowercase for consistent storage and lookup
     static normaliseEmail(email) {
         return String(email).trim().toLowerCase();
     }
 
+    // Create a consistent HMAC hash of the normalized email for lookup purposes
+    // without storing the actual email in plaintext
     static emailLookup(email) {
         return crypto
             .createHmac('sha256', this.getEncryptionKey())
@@ -30,15 +34,22 @@ export class UserModel {
 
     // Encrypt a string using AES-256-GCM. Stored as version:iv:authTag:ciphertext.
     static encrypt(text) {
+        // Generate a random 12-byte IV for GCM mode. This is not a secret and can be stored with the ciphertext.
         const iv = crypto.randomBytes(12);
         const cipher = crypto.createCipheriv('aes-256-gcm', this.getEncryptionKey(), iv);
 
+        // Encrypt the text and get the authentication tag for integrity verification
         const encrypted = Buffer.concat([
             cipher.update(String(text), 'utf8'),
             cipher.final()
         ]);
+
+        // The auth tag is essential for verifying the integrity of the ciphertext during decryption. 
+        // It should be stored alongside the IV and ciphertext.
         const authTag = cipher.getAuthTag();
 
+        // Store the version, IV, auth tag, and encrypted text together. 
+        // The version allows for future changes to the encryption scheme.
         return [
             'v1',
             iv.toString('hex'),

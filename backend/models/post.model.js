@@ -2,6 +2,7 @@ import pool from "../controllers/database.js";
 
 export class PostModel {
 
+    // Create a new post
     static async create(title, slug, tags, content, userid) {
         const query = `
         INSERT INTO posts (title, slug, tags, content, userid)
@@ -16,8 +17,10 @@ export class PostModel {
             created_at`;
         const result = await pool.query(query, [title, slug, tags, content, userid]);
         return result.rows[0];
+
     }
 
+    // Get all posts with author username
     static async findAll() {
         const query = `
         SELECT
@@ -36,6 +39,7 @@ export class PostModel {
         return result.rows;
     }
 
+    // Get a single post by ID with author username
     static async findById(id) {
         const query = `
         SELECT
@@ -54,6 +58,7 @@ export class PostModel {
         return result.rows[0];
     }
 
+    // Get a single post by slug with author username
     static async findBySlug(slug) {
         const query = `
         SELECT
@@ -72,6 +77,7 @@ export class PostModel {
         return result.rows[0];
     }
 
+    // Get a single post by hex with author username
     static async findByHex(hex) {
         const query = `
         SELECT
@@ -91,6 +97,7 @@ export class PostModel {
         return result.rows[0];
     }
 
+    // Update a post by ID
     static async update(id, title, tags, content) {
         const query = `
         UPDATE posts
