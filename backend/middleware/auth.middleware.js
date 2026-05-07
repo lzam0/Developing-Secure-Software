@@ -70,8 +70,26 @@ export const authenticateToken = async (req, res, next) => {
         rejectRequest(res, req, 500, 'Authentication error');
         return;
     }
-    req.user = decoded;
+
+    const userResult = await pool.query(
+        `SELECT 
+            userid AS id,
+            username,
+            email,
+            is_subscribed
+        FROM users
+        WHERE userid = $1`,
+        [decoded.id]
+    );
+
+    if (userResult.rows.length === 0) {
+        rejectRequest(res, req, 401, 'User not found');
+        return;
+    }
+
+    req.user = userResult.rows[0];
     next();
+
 };
 
 export const authenticateTokenOptional = async (req, res, next) => {
@@ -84,7 +102,21 @@ export const authenticateTokenOptional = async (req, res, next) => {
             'SELECT 1 FROM revoked_tokens WHERE jti = $1 LIMIT 1',
             [decoded.jti]
         );
-        if (rows.length === 0) req.user = decoded;
+        if (rows.length === 0){
+            const userResult = await pool.query(
+                `SELECT
+                    userid AS id,
+                    username,
+                    email,
+                    is_subscribed
+                FROM users
+                WHERE userid = $1`,
+                [decoded.id]
+            );
+            if (userResult.rows.length > 0){
+                req.user = userResult.rows[0];
+            }
+        }
     } catch {
         // expired, tampered, or malformed — treat as unauthenticated
     }

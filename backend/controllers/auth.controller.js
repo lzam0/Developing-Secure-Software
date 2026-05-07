@@ -89,13 +89,6 @@ export class AuthController {
             message: result.message,
             data: result
         });
-         // Set CSRF token as HTTP-only on response
-        res.cookie('csrfToken', issueCSRFToken() , {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 2 * 60 * 60 * 1000
-        });
         
     }
     catch (error) {
@@ -250,6 +243,13 @@ export class AuthController {
 
             res.cookie('token', token, {
                 httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000
+            });
+
+            res.cookie('csrfToken', issueCSRFToken(), {
+                httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
                 maxAge: 2 * 60 * 60 * 1000

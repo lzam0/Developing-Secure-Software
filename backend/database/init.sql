@@ -8,6 +8,16 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+--Adding in new fields for subscription
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS is_subscribed BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(50) DEFAULT 'inactive';
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
+
 -- Create Profile Table
 CREATE TABLE IF NOT EXISTS profiles (
     profileid SERIAL PRIMARY KEY,
@@ -62,13 +72,14 @@ CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires ON revoked_tokens(expires_
 
 -- INSERT TEST USER
 --- PASSWORD IS "123" WITH BCRYPT HASH + PEPPER + SALT_ROUNDS 10
-INSERT INTO users (username, email, password) 
+INSERT INTO users (username, email, password, is_verified) 
 VALUES
-('testuser', 'testuser@example.com', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG'),
-('leihl', 'psh22xtu@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG'),
-('katrina', 'k.cuevas@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG'),
-('chantelle', 'chantelle.todd@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG'),
-('aman', 'aman.dosanjh@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG'),
-('dylan', 'dylan.young@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG');
+('testuser', 'testuser@example.com', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('leihl', 'psh22xtu@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('katrina', 'k.cuevas@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('chantelle', 'chantelle.todd@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('aman', 'aman.dosanjh@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('dylan', 'dylan.young@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE)
+ON CONFLICT (email) DO NOTHING;
 
 -- 2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG
