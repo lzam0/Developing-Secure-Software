@@ -2,6 +2,7 @@ import { expect } from "chai";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import authController from "../../controllers/auth.controller.js";
+import { requirePendingOtpSession } from "../../middleware/otp-session.middleware.js";
 import { AuthService } from "../../service/auth.service.js";
 import OtpModel from "../../models/otp.model.js";
 import UserModel from "../../models/user.model.js";
@@ -188,14 +189,14 @@ describe("OTP Security", () => {
         expect(req.session.otpPurpose).to.equal("signin");
     });
 
-    it("verifyOtp should reject when there is no OTP session", async () => {
-        const req = { body: { otp: "123456" }, session: {} };
+    it("verifyOtp should reject when there is no OTP session", () => {
+        const req = { body: { otp: "123456" }, session: {}, accepts: () => false };
         const res = createMockRes();
 
-        await authController.verifyOtp(req, res, () => {});
+        requirePendingOtpSession(req, res, () => {});
 
-        expect(res.statusCode).to.equal(400);
-        expect(res.body.message).to.equal("No OTP session found");
+        expect(res.statusCode).to.equal(401);
+        expect(res.body.message).to.equal("No active OTP session");
     });
 
     it("verifyOtp should reject expired OTP and mark it used", async () => {
