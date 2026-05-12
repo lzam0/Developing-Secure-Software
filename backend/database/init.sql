@@ -59,6 +59,17 @@ CREATE TABLE IF NOT EXISTS email_otps (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create Suspicious Activity Reports Table
+CREATE TABLE IF NOT EXISTS suspicious_activity_reports (
+    reportid SERIAL PRIMARY KEY,
+    userid INTEGER NOT NULL REFERENCES users(userid) ON DELETE CASCADE,
+    report_token_hash VARCHAR(255) NOT NULL UNIQUE,
+    purpose VARCHAR(50) NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL
+);
+
 -- table for invalid or logged-out session tokens 
 CREATE TABLE IF NOT EXISTS revoked_tokens (
     id SERIAL PRIMARY KEY, 
