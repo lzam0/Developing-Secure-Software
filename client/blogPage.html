@@ -2,7 +2,9 @@
 <html>
     <head>
         <link rel="stylesheet" href="/styles.css">
+        <script src ="js/csrf.js"></script>
         <script src="/js/verify.js"></script>
+        <script src="/js/payment.js" defer></script>
         <script src="/js/blog-page.js" defer></script>
         <script src="/components/header.js"></script>
         <script src="/components/navbar.js" defer></script>
@@ -34,7 +36,7 @@
             <section class="post-body" id="post-body"></section>
             <div class="paywall-cta" id="paywall-cta" style="display:none">
                 <p class="paywall-text">Subscribe to read the full post</p>
-                <a href="/payment.html" class="paywall-button">Subscribe</a>
+                <button id="subscribe-btn" class="paywall-button" type="button">Subscribe</button>
             </div>
             <hr class="post-divider"/>
             <footer class="post-footer">

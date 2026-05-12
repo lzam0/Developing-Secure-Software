@@ -14,6 +14,9 @@ import helmet from 'helmet';
 import { sanitiseBody } from "./middleware/sanitise.middleware.js";
 import { getHelmetConfig } from "./config/helmet.js";
 import { requirePendingOtpSession } from "./middleware/otp-session.middleware.js";
+import paymentRoutes from "./routes/payment.routes.js";
+import paymentController from "./controllers/payment.controller.js";
+import securityRoutes from './routes/security.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +33,12 @@ app.use(cors({
     origin: process.env.FRONTEND_URL,
     credentials: true
 }));
+
+app.post(
+    '/payments/webhook',
+    express.raw({ type: 'application/json'}),
+    paymentController.stripeWebhook
+)
 
 // Parse JSON/form bodies and cookies before routes need them
 app.use(express.json());
@@ -87,6 +96,8 @@ app.use(express.static(path.join(__dirname, "../client")));
 // API Routes
 app.use("/auth", authRoutes);
 app.use("/posts", postsRoutes);
+app.use("/payments", paymentRoutes);
+app.use('/security', securityRoutes);
 
 // Error Handler - must be last
 app.use(errorHandler);

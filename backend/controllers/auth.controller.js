@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { AuthService } from '../service/auth.service.js';
 import OtpModel from '../models/otp.model.js';
 import UserModel from '../models/user.model.js';
+import SecurityModel from '../models/security.model.js';
 import EmailController from './email.controller.js';
 import dotenv from 'dotenv';
 import { issueCSRFToken } from '../middleware/csrf.middleware.js';
@@ -168,7 +169,30 @@ export class AuthController {
         req.session.userId = result.user.id;
         req.session.otpPurpose = 'signin';
 
-        await EmailController.sendSignInOtpEmail(result.user.email, otp, result.user.username);
+        const reportToken = crypto.randomBytes(32).toString('hex');
+
+        const reportTokenHash = crypto
+            .createHash('sha256')
+            .update(reportToken)
+            .digest('hex');
+
+        const reportTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        await SecurityModel.createReportToken(
+            result.user.id,
+            reportTokenHash,
+            'signin',
+            reportTokenExpiresAt
+        );
+
+        const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
+
+        await EmailController.sendSignInOtpEmail(
+            result.user.email,
+            otp,
+            result.user.username,
+            reportUrl
+        );
 
         return res.status(200).json({
             success: true,

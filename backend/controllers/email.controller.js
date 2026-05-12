@@ -60,7 +60,7 @@ export class EmailController {
     }
 
     //Sign In 2FA Email
-    static async sendSignInOtpEmail(to, otp, username = 'User') {
+    static async sendSignInOtpEmail(to, otp, username = 'User', reportUrl = null) {
 
         const subject = 'Your Health and Lifestyle Blog Sign-In Verification Code';
 
@@ -75,7 +75,12 @@ export class EmailController {
 
         This code will expire in 5 minutes.
 
-        If this was not you, please ignore this email and consider changing your password.
+        ${reportUrl ? `
+        If you did not request this sign-in code, click the link below:
+        ${reportUrl}
+
+        This will cancel the verification code so it cannot be used.
+        ` : ''}
 
         Kind regards,
         Health and Lifestyle Blog Team`;
