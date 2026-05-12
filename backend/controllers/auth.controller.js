@@ -164,6 +164,7 @@ export class AuthController {
                     message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
                 });
             }
+            
             console.log("Recaptcha Data from Google:", recaptchaData);
             
             // Call the AuthService to handle user authentication
@@ -174,6 +175,7 @@ export class AuthController {
             const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
             const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
+            // Invalidate any existing OTPs for this user and purpose
             await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
             await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
 
@@ -181,35 +183,39 @@ export class AuthController {
             req.session.userId = result.user.id;
             req.session.otpPurpose = 'signin';
 
-        const reportToken = crypto.randomBytes(32).toString('hex');
+            // Generate a unique report token for this sign in attempt,
+            // store its hash in the database with an expiry time,
+            // and include the token in the OTP email so the user can report if this sign in attempt was not made by them
+            const reportToken = crypto.randomBytes(32).toString('hex');
+        
+            // Hash the report token before storing it in the database, 
+            // so if the database is compromised, attackers cannot use the tokens to generate valid report URLs
+            const reportTokenHash = crypto
+                .createHash('sha256')
+                .update(reportToken)
+                .digest('hex');
+        
+            // Report token to expire in 15 minutes
+            const reportTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-        const reportTokenHash = crypto
-            .createHash('sha256')
-            .update(reportToken)
-            .digest('hex');
+            await SecurityModel.createReportToken(
+                result.user.id,
+                reportTokenHash,
+                'signin',
+                reportTokenExpiresAt
+            );
 
-        const reportTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+            const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
 
-        await SecurityModel.createReportToken(
-            result.user.id,
-            reportTokenHash,
-            'signin',
-            reportTokenExpiresAt
-        );
+            await EmailController.sendSignInOtpEmail(
+                result.user.email,
+                otp,
+                result.user.username,
+                reportUrl
+            );
 
-        const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
-
-        await EmailController.sendSignInOtpEmail(
-            result.user.email,
-            otp,
-            result.user.username,
-            reportUrl
-        );
-
-            return res.status(200).json({
-                success: true,
-                message: 'Verification code sent to email.'
-            });
+            // Generic success message
+            return res.status(200).json({ success: true, message: 'Verification code sent to email.'});
         }catch (error) {
             // Pass error to error handling middleware
             console.error(error);
@@ -217,15 +223,21 @@ export class AuthController {
         }
     }
 
+    // POST /api/auth/verify-otp
     static async verifyOtp(req, res, next) {
         try {
+            // Extract the OTP from the request body
             const { otp } = req.body;
 
+            // Validate that the OTP is present
             const otpRecord = await OtpModel.findLatestActiveByUserId(
                 req.session.userId,
                 req.session.otpPurpose
             );
 
+            // No active OTP found for this user and purpose
+            // OTP was already used, expired, or never generated
+            // Respond with a generic message to avoid revealing which case it is
             if (!otpRecord) {
                 return res.status(400).json({
                     success: false,
@@ -233,6 +245,7 @@ export class AuthController {
                 });
             }
 
+            // Check if the OTP has expired by comparing the current time with the expires_at field in the database
             if (new Date() > new Date(otpRecord.expires_at)) {
                 await OtpModel.markUsed(otpRecord.otpid);
                 return res.status(400).json({
@@ -241,6 +254,7 @@ export class AuthController {
                 });
             }
 
+            // Check if the OTP has exceeded the maximum number of allowed attempts (e.g., 5 attempts)
             if (otpRecord.attempts >= 5) {
                 await OtpModel.markUsed(otpRecord.otpid);
                 req.session.destroy(() => {});
@@ -250,6 +264,7 @@ export class AuthController {
                 });
             }
 
+            // Compare the provided OTP with the hashed OTP stored in the database
             const isOtpValid = await bcrypt.compare(otp, otpRecord.otp_hash);
 
             if (!isOtpValid) {
@@ -260,11 +275,14 @@ export class AuthController {
                 });
             }
 
+            // If the OTP is valid, mark it as used in the database to prevent reuse
             await OtpModel.markUsed(otpRecord.otpid);
 
             if (req.session.otpPurpose === 'signup') {
                 await UserModel.markVerified(req.session.userId);
-
+                
+                // Destroy the session after successful verification to prevent reuse
+                // Require the user to sign in with their new account
                 req.session.destroy(() => {});
 
                 return res.status(200).json({
