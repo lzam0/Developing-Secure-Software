@@ -2,6 +2,7 @@ import { expect } from "chai";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import authController from "../../controllers/auth.controller.js";
+import { requirePendingOtpSession } from "../../middleware/otp-session.middleware.js";
 import { AuthService } from "../../service/auth.service.js";
 import OtpModel from "../../models/otp.model.js";
 import UserModel from "../../models/user.model.js";
@@ -41,6 +42,7 @@ describe("OTP Security", () => {
     const originalBcryptHash = bcrypt.hash;
     const originalBcryptCompare = bcrypt.compare;
     const originalJwtSign = jwt.sign;
+    const originalFetch = global.fetch;
 
     afterEach(() => {
         AuthService.signUp = originalSignUp;
@@ -56,12 +58,16 @@ describe("OTP Security", () => {
         bcrypt.hash = originalBcryptHash;
         bcrypt.compare = originalBcryptCompare;
         jwt.sign = originalJwtSign;
+        global.fetch = originalFetch;
     });
 
     it("signUp should return a generic success response when anti-enumeration path is triggered", async () => {
         AuthService.signUp = async () => ({
             message: "A verification email has been sent to your email address. Please check your inbox and follow the instructions to complete your registration.",
             status: "pending"
+        });
+        global.fetch = async () => ({
+            json: async () => ({ success: true, score: 0.9 })
         });
 
         let otpTouched = false;
@@ -70,7 +76,7 @@ describe("OTP Security", () => {
         EmailController.sendSignUpOtpEmail = async () => { otpTouched = true; };
 
         const req = {
-            body: { username: "takenuser", email: "taken@example.com", password: "password123" },
+            body: { username: "takenuser", email: "taken@example.com", password: "password123", captchaToken: "captcha-token" },
             session: {}
         };
         const res = createMockRes();
@@ -97,6 +103,9 @@ describe("OTP Security", () => {
                 email: "aman@example.com"
             }
         });
+        global.fetch = async () => ({
+            json: async () => ({ success: true, score: 0.9 })
+        });
 
         let invalidated = false;
         let createdArgs = null;
@@ -115,7 +124,7 @@ describe("OTP Security", () => {
         };
 
         const req = {
-            body: { username: "aman", email: "aman@example.com", password: "password123" },
+            body: { username: "aman", email: "aman@example.com", password: "password123", captchaToken: "captcha-token" },
             session: {}
         };
         const res = createMockRes();
@@ -141,6 +150,9 @@ describe("OTP Security", () => {
                 email: "aman@example.com"
             }
         });
+        global.fetch = async () => ({
+            json: async () => ({ success: true, score: 0.9 })
+        });
 
         let invalidated = false;
         let createdArgs = null;
@@ -159,7 +171,7 @@ describe("OTP Security", () => {
         };
 
         const req = {
-            body: { username: "aman", password: "password123" },
+            body: { username: "aman", password: "password123", captchaToken: "captcha-token" },
             session: {}
         };
         const res = createMockRes();
@@ -177,14 +189,14 @@ describe("OTP Security", () => {
         expect(req.session.otpPurpose).to.equal("signin");
     });
 
-    it("verifyOtp should reject when there is no OTP session", async () => {
-        const req = { body: { otp: "123456" }, session: {} };
+    it("verifyOtp should reject when there is no OTP session", () => {
+        const req = { body: { otp: "123456" }, session: {}, accepts: () => false };
         const res = createMockRes();
 
-        await authController.verifyOtp(req, res, () => {});
+        requirePendingOtpSession(req, res, () => {});
 
-        expect(res.statusCode).to.equal(400);
-        expect(res.body.message).to.equal("No OTP session found");
+        expect(res.statusCode).to.equal(401);
+        expect(res.body.message).to.equal("No active OTP session");
     });
 
     it("verifyOtp should reject expired OTP and mark it used", async () => {
@@ -368,10 +380,16 @@ describe("OTP Security", () => {
         expect(res.body.redirectTo).to.equal("blogListingPage.html");
         expect(markUsedCalled).to.equal(true);
         expect(destroyed).to.equal(true);
-        expect(res.cookies).to.have.length(1);
-        expect(res.cookies[0].name).to.equal("token");
-        expect(res.cookies[0].value).to.equal("signed.jwt.token");
-        expect(res.cookies[0].options.httpOnly).to.equal(true);
-        expect(res.cookies[0].options.sameSite).to.equal("strict");
+        expect(res.cookies).to.have.length(2);
+
+        const tokenCookie = res.cookies.find(cookie => cookie.name === "token");
+        const csrfCookie = res.cookies.find(cookie => cookie.name === "csrfToken");
+
+        expect(tokenCookie.value).to.equal("signed.jwt.token");
+        expect(tokenCookie.options.httpOnly).to.equal(true);
+        expect(tokenCookie.options.sameSite).to.equal("strict");
+        expect(csrfCookie.value).to.match(/^[a-f0-9]{64}$/);
+        expect(csrfCookie.options.httpOnly).to.equal(false);
+        expect(csrfCookie.options.sameSite).to.equal("strict");
     });
 });

@@ -186,13 +186,6 @@ export class AuthController {
     try {
         const { otp } = req.body;
 
-        if (!req.session || !req.session.userId || !req.session.otpPurpose) {
-            return res.status(400).json({
-                success: false,
-                message: 'No OTP session found'
-            });
-        }
-
         const otpRecord = await OtpModel.findLatestActiveByUserId(
             req.session.userId,
             req.session.otpPurpose

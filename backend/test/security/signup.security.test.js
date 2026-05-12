@@ -50,7 +50,7 @@ describe("Signup Security", () => {
         let caught = null;
 
         try {
-            await AuthService.signUp("aman", "bademail", "password123");
+            await AuthService.signUp("test", "bademail", "password123");
         } catch (error) {
             caught = error;
         }
@@ -68,7 +68,7 @@ describe("Signup Security", () => {
         let caught = null;
 
         try {
-            await AuthService.signUp("aman", "aman@example.com", "lettersonly");
+            await AuthService.signUp("test", "healthblog@example.com", "lettersonly");
         } catch (error) {
             caught = error;
         }
@@ -89,13 +89,40 @@ describe("Signup Security", () => {
             password
         });
 
-        const result = await AuthService.signUp("aman", "aman@example.com", "password123");
+        bcrypt.hash = async () => "fake-hash";
+
+        const result = await AuthService.signUp("test", "healthblog@example.com", "Password123!");
 
         expect(result.status).to.equal("pending");
         expect(result.user).to.deep.equal({
             id: 77,
-            username: "aman",
-            email: "aman@example.com"
+            username: "test",
+            email: "healthblog@example.com"
         });
+    });
+
+    it("should hash the password before creating the user", async () => {
+        let createdPassword = null;
+
+        UserModel.findByEmail = async () => null;
+        UserModel.findByUsername = async () => null;
+
+        bcrypt.hash = async () => "fake-hash";
+
+        UserModel.create = async(username, email, password) => {
+            createdPassword = password;
+
+            return{
+                id: 77,
+                username,
+                email,
+                password
+            };
+        };
+
+        await AuthService.signUp("test", "healthblog@example.com", "Password123!");
+
+        expect(createdPassword).to.equal("fake-hash");
+        expect(createdPassword).to.not.equal("Password123!");
     });
 });
