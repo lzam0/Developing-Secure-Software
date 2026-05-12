@@ -6,9 +6,11 @@ import sanitiseHtml from 'sanitize-html';
 export const sanitiseBody = (req, res, next) => {
     // check there is a body to process
     if (req.body && typeof req.body === 'object') {
+
         // e.g. blog post submission - ['title', 'content', 'author']
         // loop through each field so every string gets sanitised
         for (const key of Object.keys(req.body)) {
+            
             // only sanitise string values
             if (typeof req.body[key] === 'string') {
                 const original = req.body[key];

@@ -41,10 +41,3 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
         });
     });
 });
-
-/* To ensure that users cannot use network phising tools to steal credentials, we can implement the following measures:
-1. Implement randomised response times for login attempts to make it harder for attackers to identify valid credentials based on response times.
-2. Use CAPTCHAs after a certain number of failed login attempts to prevent automated attacks.
-3. Implement rate limiting on login attempts to prevent brute-force attacks.
-4. Use secure cookies with the HttpOnly and Secure flags to prevent client-side scripts from accessing authentication tokens.
-*/

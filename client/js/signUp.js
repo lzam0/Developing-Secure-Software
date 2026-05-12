@@ -1,6 +1,9 @@
+
+// Client-side JavaScript for handling user registration (sign-up) form submission and validation
 document.getElementById("signup_form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    // Get form values
     const messageDisplay = document.getElementById("message_display");
     const username = document.getElementById("username_input").value;
     const email = document.getElementById("email_input").value;
@@ -8,6 +11,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
     const password = document.getElementById("password_input").value;
     const confirmPassword = document.getElementById("confirm_password_input").value;
 
+    // Helper function to show error messages in the form
     const errorEl = document.getElementById("form_error");
     const showError = (msg) => {
         errorEl.textContent = msg;
@@ -20,21 +24,24 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
         showError("All fields are required.");
         return;
     }
+
+    // Check if email and confirm email match, and if password and confirm password match
     if (email !== confirmEmail) {
         showError("Email addresses do not match.");
         return;
     }
+
+    // Check if password and confirm password match
     if (password !== confirmPassword) {
         showError("Passwords do not match.");
         return;
     }
 
+    // Use reCAPTCHA to prevent automated sign-ups and bots
     grecaptcha.ready(function() {
         grecaptcha.execute('6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb', {action: 'signup'}).then(async (token) => {
             try {
                 // Send a POST request to the backend API for registration
-                        
-               
                 const response = await fetch(`${BACKEND_URL}/auth/signUp`, {
                     method: "POST",
                     headers: {
@@ -51,6 +58,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
                     })
                 });
                 
+                // Parse JSON response from the backend
                 const data = await response.json();
                 
                 if(response.ok) {

@@ -74,6 +74,8 @@ export const authenticateToken = async (req, res, next) => {
         return;
     }
 
+    // if we get here, the token is valid and not revoked,
+    //  so we can attach the user info to the request object for use in later middleware/routes
     const userResult = await pool.query(
         `SELECT 
             userid AS id,

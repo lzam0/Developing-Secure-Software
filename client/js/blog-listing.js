@@ -1,14 +1,18 @@
 let allPosts = [];
 
+// Helper functions 
+// Initials function to get the first two letters of the username for the avatar
 function initials(username) {
     return username.slice(0, 2).toUpperCase();
 }
 
+// Format date function to display the post creation date in "Month Year" format
 function formatDate(dateStr) {
     const date = new Date(dateStr);
     return date.toLocaleString('default', { month: 'long', year: 'numeric' });
 }
 
+// Render cards function to display the posts in the grid
 function renderCards(posts) {
     const grid = document.getElementById("card-grid");
     grid.innerHTML = "";

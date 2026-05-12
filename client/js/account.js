@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (res.ok) {
             const { data } = await res.json();
 
+            // Populate the form fields with the fetched profile data
             const nameEl     = document.getElementById('full_name_input');
             const usernameEl = document.getElementById('username_input');
             const emailEl    = document.getElementById('email_input');
@@ -22,6 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error('Failed to load profile:', err);
     }
 
+    // ====================================================================================================
+    // Profile editing logic
     const editButton = document.getElementById('edit_profile_btn');
     const profileInputs = [
         document.getElementById('full_name_input'),
@@ -29,9 +32,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('bio_input')
     ];
 
+    // Create an event listener for edit/ save button
+    // Toggle between read-only and editable states for the profile fields
     editButton.addEventListener('click', async () => {
         const isReadOnly = profileInputs[0].hasAttribute('readonly');
 
+        // Read only state: switch to edit mode
         if (isReadOnly) {
             // Switch to edit mode
             profileInputs.forEach((input) => input.removeAttribute('readonly'));
@@ -54,6 +60,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     name:     document.getElementById('full_name_input').value
                 })
             });
+
+            // If successful, switch back to read only mode and update button text. Otherwise, show an error message.
             if (res.ok) {
                 profileInputs.forEach((input) => input.setAttribute('readonly', true));
                 editButton.innerText = "Edit Profile";
@@ -69,9 +77,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
+    // Email editing logic
+    // separate from other profile fields since it has its own endpoint and validation rules
     const emailInput = document.getElementById('email_input');
     document.getElementById('update_email_btn').addEventListener('click', async () => {
         if (emailInput.hasAttribute('readonly')) {
+            
             // Switch to edit mode
             emailInput.removeAttribute('readonly');
             emailInput.focus();
@@ -90,6 +101,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 credentials: 'include',
                 body: JSON.stringify({ email: emailInput.value })
             });
+
+            // If successful, switch back to read only mode and show success message. Otherwise, show an error message.
             if (res.ok) {
                 alert("Email updated successfully!");
                 emailInput.setAttribute('readonly', true);
@@ -104,6 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
+    // Account deletion logic
     document.getElementById('delete_account_btn').addEventListener('click', async () => {
         if (!confirm("Are you sure you want to permanently delete your account? This cannot be undone.")) {
             return;
