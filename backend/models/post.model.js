@@ -39,25 +39,6 @@ export class PostModel {
         return result.rows;
     }
 
-    // Get a single post by ID with author username
-    static async findById(id) {
-        const query = `
-        SELECT
-            p.postid AS id,
-            p.title,
-            p.slug,
-            p.tags,
-            p.content,
-            p.userid,
-            p.created_at,
-            u.username
-        FROM posts p
-        JOIN users u ON p.userid = u.userid
-        WHERE p.postid = $1`;
-        const result = await pool.query(query, [id]);
-        return result.rows[0];
-    }
-
     // Get a single post by slug with author username
     static async findBySlug(slug) {
         const query = `

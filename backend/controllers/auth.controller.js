@@ -17,11 +17,14 @@ function generateOtp() {
     return crypto.randomInt(100000, 1000000).toString();
 }
 
+// Create a new session after sign up or sign in
+// store the user ID and OTP purpose in the session for later verification
 async function regenerateSession(req) {
     if (!req.session?.regenerate) {
         return;
     }
 
+    // regenerate the session to prevent session fixation attacks, and promisify it to use async/await
     await new Promise((resolve, reject) => {
         req.session.regenerate((error) => {
             if (error) reject(error);
@@ -39,6 +42,7 @@ export class AuthController {
     try {
         console.log("SIGN UP CALL")
 
+        // Extract username, email, password, and captchaToken from the request body
         const { username, email, password, captchaToken } = req.body;
 
         // Validate Input
@@ -46,12 +50,13 @@ export class AuthController {
             return res.status(400).json({ message: "All fields are required" });
         }
 
+        // Check if captchaToken is present
         if (!captchaToken) {
             return res.status(400).json({ message: "Security check missing. Please refresh." });
         }
 
+        // Verify the captchaToken with Google's reCAPTCHA API to ensure the request is from a human and not a bot
         const SECRET_KEY = process.env.RECAPTCHA_SECRET;
-
         const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 
         // Verify with Google
@@ -88,20 +93,26 @@ export class AuthController {
         const otp = generateOtp();
         const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
+        
+        // Invalidate any existing OTPs for this user and purpose
+        // then create a new OTP record in the database with the hashed OTP, purpose, and expiry time
         await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
         await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
 
+        // Regenerate the session to prevent session fixation
         await regenerateSession(req);
         req.session.userId = result.user.id;
         req.session.otpPurpose = 'signup';
 
+        // Send the OTP to the user's email for verification using the EmailController
         await EmailController.sendSignUpOtpEmail(
             result.user.email,
             otp,
             result.user.username
         );
-                
+        
+        // Respond with a generic success message indicating that the registration was successful and an OTP has been sent
+        // It does not reveal whether the email/username already exists or not, to prevent user enumeration attacks
         return res.status(201).json({
             success: true,
             message: result.message,
@@ -120,6 +131,7 @@ export class AuthController {
  */
     static async signIn(req, res, next) {
         try {
+            
             // Extract email and password from request body
             const { identifier, email, password, captchaToken } = req.body;
             const loginEmail = email || identifier;
@@ -130,13 +142,14 @@ export class AuthController {
                     message: 'Email and password are required'
                 });
                 return;
-            }
+        }
 
-            
+        // Check if captchaToken is present
         if (!captchaToken) {
             return res.status(400).json({ message: "Security check missing. Please refresh." });
         }
 
+        // Verify the captchaToken with Google's reCAPTCHA API to ensure the request is from a human and not a bot
         const SECRET_KEY = process.env.RECAPTCHA_SECRET;
         const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 

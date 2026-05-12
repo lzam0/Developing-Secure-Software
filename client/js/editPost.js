@@ -1,6 +1,4 @@
-// Stores the numeric post ID and full slug after the post is fetched.
-// postId is used for the PUT request; postSlug is used for the redirect after saving.
-let postId = null;
+let postHex = null;
 let postSlug = null;
 
 async function loadPostForEdit() {
@@ -46,7 +44,7 @@ async function loadPostForEdit() {
     }
 
     // Store for use in savePost()
-    postId = post.id;
+    postHex = hex;
     postSlug = post.slug;
 
     // Pre-populate form fields using .value — never innerHTML — to prevent XSS
@@ -66,7 +64,7 @@ async function loadPostForEdit() {
 
 async function savePost() {
     // Guard against savePost being called before the post has loaded
-    if (!postId) return;
+    if (!postHex) return;
 
     const title = document.getElementById("post-title").value.trim();
     const tags = document.getElementById("category").value;
@@ -74,7 +72,7 @@ async function savePost() {
 
     // Send the updated fields to the backend via PUT.
     // The server validates ownership (403 if not author) and field format via validatePost middleware.
-    const response = await fetch(`${BACKEND_URL}/posts/${postId}`, {
+    const response = await fetch(`${BACKEND_URL}/posts/slug/${postHex}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": getCSRFToken() },
         credentials: "include",

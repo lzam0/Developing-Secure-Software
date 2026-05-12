@@ -9,10 +9,9 @@ const router = Router();
 /* Public Routes */
 router.get('/', PostsController.getAll);
 router.get('/slug/:hex', authenticateTokenOptional, PostsController.getOneByHex);
-router.get('/:id', PostsController.getOne);
 
 /* Protected Routes */
 router.post('/', authenticateToken, validateCSRF, validatePost, PostsController.create);
-router.put('/:id', authenticateToken, validateCSRF, validatePost, PostsController.update);
+router.put('/slug/:hex', authenticateToken, validateCSRF, validatePost, PostsController.update);
 
 export default router;
