@@ -28,7 +28,8 @@ export class PaymentController {
                     }
                 },
                 success_url: `${process.env.CLIENT_URL}/payment-success.html`,
-                cancel_url: `${process.env.CLIENT_URL}/payment-cancel.html`
+                cancel_url: `${process.env.CLIENT_URL}/payment-cancel.html`,
+                expires_at: Math.floor(Date.now() /1000) + (30*60)
             });
 
             res.status(200).json({

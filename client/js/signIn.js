@@ -5,6 +5,10 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
     // Get the username and password values from the input fields
     const username = document.getElementById("username_input").value;
     const password = document.getElementById("password_input").value;
+    const loginButton = document.getElementById("login_btn");
+
+    loginButton.disabled = true;
+    loginButton.textContent = "Sending code...";
 
     grecaptcha.ready(function () {
         grecaptcha.execute('6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb', {action: 'login'}).then(async (token) => {
@@ -30,12 +34,18 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
                     // If login fails, show an error message
                     const errorData = await response.json();
                     alert(`Login failed: ${errorData.message}`);
+
+                    loginButton.disabled = false;
+                    loginButton.textContent = "Log in";
                 }
 
             } catch (error) {
                 // Error Message
                 console.error("Error during login:", error?.message || String(error));
                 alert("An error occurred during login. Please try again.");
+                
+                loginButton.disabled = false;
+                loginButton.textContent = "Log in";
                 return;
             }
         });

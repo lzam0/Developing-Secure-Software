@@ -157,6 +157,19 @@ export class AuthController {
         // Call the AuthService to handle user authentication
         const result = await AuthService.signIn(loginIdentifier, password);
 
+        // Check if there's already an active OTP for the user
+        const existingOtp = await OtpModel.findLatestActiveByUserId(
+            result.user.id,
+            'signin'
+        );
+
+        if (existingOtp){
+            return res.status(429).json({
+                success: false,
+                message: 'A verification code has already been sent. Please check your email or wait 5 minutes for the code to expire.'
+            });
+        }
+
         // Generate login 2FA OTP
         const otp = generateOtp();
         const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));

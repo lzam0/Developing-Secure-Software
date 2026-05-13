@@ -28,7 +28,7 @@ export class OtpModel {
         const query = `
             SELECT otpid, userid, otp_hash, purpose, expires_at, attempts, used, created_at
             FROM email_otps
-            WHERE userid = $1 AND purpose = $2 AND used = FALSE
+            WHERE userid = $1 AND purpose = $2 AND used = FALSE AND expires_at > NOW()
             ORDER BY created_at DESC
             LIMIT 1
         `;
