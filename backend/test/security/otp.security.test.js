@@ -6,6 +6,7 @@ import { requirePendingOtpSession } from "../../middleware/otp-session.middlewar
 import { AuthService } from "../../service/auth.service.js";
 import OtpModel from "../../models/otp.model.js";
 import UserModel from "../../models/user.model.js";
+import SecurityModel from "../../models/security.model.js";
 import EmailController from "../../controllers/email.controller.js";
 
 function createMockRes() {
@@ -37,6 +38,7 @@ describe("OTP Security", () => {
     const originalIncrement = OtpModel.incrementAttempts;
     const originalMarkUsed = OtpModel.markUsed;
     const originalMarkVerified = UserModel.markVerified;
+    const originalCreateReportToken = SecurityModel.createReportToken;
     const originalSendSignUpOtpEmail = EmailController.sendSignUpOtpEmail;
     const originalSendSignInOtpEmail = EmailController.sendSignInOtpEmail;
     const originalBcryptHash = bcrypt.hash;
@@ -53,6 +55,7 @@ describe("OTP Security", () => {
         OtpModel.incrementAttempts = originalIncrement;
         OtpModel.markUsed = originalMarkUsed;
         UserModel.markVerified = originalMarkVerified;
+        SecurityModel.createReportToken = originalCreateReportToken;
         EmailController.sendSignUpOtpEmail = originalSendSignUpOtpEmail;
         EmailController.sendSignInOtpEmail = originalSendSignInOtpEmail;
         bcrypt.hash = originalBcryptHash;
@@ -159,6 +162,7 @@ describe("OTP Security", () => {
         let emailedArgs = null;
 
         bcrypt.hash = async () => "hashed-otp";
+        OtpModel.findLatestActiveByUserId = async () => null;
         OtpModel.invalidateExistingOtps = async (userId, purpose) => {
             invalidated = userId === 20 && purpose === "signin";
         };
@@ -166,6 +170,7 @@ describe("OTP Security", () => {
             createdArgs = { userId, otpHash, purpose, expiresAt };
             return { otpid: 2 };
         };
+        SecurityModel.createReportToken = async () => ({ id: 1 });
         EmailController.sendSignInOtpEmail = async (email, otp, username) => {
             emailedArgs = { email, otp, username };
         };
