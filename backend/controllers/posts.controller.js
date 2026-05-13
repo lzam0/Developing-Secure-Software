@@ -81,8 +81,7 @@ export class PostsController {
             }
 
             const isAuthor = req.user?.id === post.userid;
-            // STUB — replace with real subscription check when payment is built
-            const isSubscriber = false;
+            const isSubscriber = req.user?.is_subscribed === true;
             const hasFullAccess = isAuthor || isSubscriber;
 
             if (!hasFullAccess) {

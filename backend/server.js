@@ -9,9 +9,14 @@ import postsRoutes from "./routes/posts.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import { authenticateToken } from "./middleware/auth.middleware.js";
 import rateLimit from 'express-rate-limit';
+import session from "express-session";
 import helmet from 'helmet';
 import { sanitiseBody } from "./middleware/sanitise.middleware.js";
 import { getHelmetConfig } from "./config/helmet.js";
+import { requirePendingOtpSession } from "./middleware/otp-session.middleware.js";
+import paymentRoutes from "./routes/payment.routes.js";
+import paymentController from "./controllers/payment.controller.js";
+import securityRoutes from './routes/security.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +34,12 @@ app.use(cors({
     credentials: true
 }));
 
+app.post(
+    '/payments/webhook',
+    express.raw({ type: 'application/json'}),
+    paymentController.stripeWebhook
+)
+
 // Parse JSON/form bodies and cookies before routes need them
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,14 +47,13 @@ app.use(sanitiseBody);
 app.use(cookieParser());
 
 // Rate Limiting Middleware - apply to all requests
-
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 1000,
+    max: 1000, // 1000 Requests so that we can test at the moment
 });
 app.use(globalLimiter);
 
-// Auth-gated static routes — must come before express.static
+// Auth gated static routes — must come before express.static
 const protectedPages = [
     '/payment.html',
     '/account.html',
@@ -57,19 +67,44 @@ const protectedPages = [
 ];
 app.use(protectedPages, authenticateToken, (_req, _res, next) => next());
 
+// Parse JSON bodies and cookies
+app.use(express.json());
+app.use(cookieParser());
+
+// name = session ID cookie
+// resave: false - dont save the session again if nothing changed
+// saveUninitialized: false - dont create/save a session for a visitor unless we actually put something in it
+app.use(session({
+    name: 'sid',
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false, // false because local development uses HTTP instead of HTTPS
+        sameSite: 'strict',
+        maxAge: 10 * 60 * 1000 // Session cookie length (10 minutes)
+    }
+}));
+
+// 2FA require pending otp session redirection
+app.get('/2fa.html', requirePendingOtpSession, (_req, _res, next) => next());
+
 // Single static file handler
 app.use(express.static(path.join(__dirname, "../client")));
 
 // API Routes
 app.use("/auth", authRoutes);
 app.use("/posts", postsRoutes);
+app.use("/payments", paymentRoutes);
+app.use('/security', securityRoutes);
 
 // Error Handler - must be last
 app.use(errorHandler);
 
 const PORT = process.env.PORT;
 
-// Running on PORT http://localhost:5000
+// Running on PORT
 app.listen(PORT, () => {
     console.log(`Server running on port http://localhost:${PORT}`);
 });

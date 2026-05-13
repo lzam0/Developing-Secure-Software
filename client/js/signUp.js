@@ -29,7 +29,6 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
         return;
     }
 
-    
     grecaptcha.ready(function() {
         grecaptcha.execute('6LfmwbYsAAAAAKiIOTDeYfYPj3ISopFJpnfdYNDb', {action: 'signup'}).then(async (token) => {
             try {
@@ -40,7 +39,7 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                "X-CSRF-Token": getCSRFToken()
+                        "X-CSRF-Token": getCSRFToken()
                     },
                     credentials: "include",
                     body: JSON.stringify({ 
@@ -51,11 +50,11 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
                         captchaToken: token 
                     })
                 });
-
+                
                 const data = await response.json();
-
-                if (response.ok) {
-                    // If registration is successful, redirect to the login page
+                
+                if(response.ok) {
+                // If registration is successful, redirect to the 2fa page for account verification
             
                     // show the generic success message
                     messageDisplay.textContent = data.message; 
@@ -65,19 +64,19 @@ document.getElementById("signup_form").addEventListener("submit", async (e) => {
                     document.getElementById("signup_form").reset();
 
                     setTimeout(() => {
-                        window.location.href = "login.html";
+                        window.location.href = "2fa.html";
                     }, 4000);
-                } else {
-                    // this only triggers for ACTUAL errors (like server down or invalid email format)
-                  
+                }
+                else {
+                // this only triggers for ACTUAL errors (like server down or invalid email format)
                     messageDisplay.textContent = data.message || "An error occurred.";
                     messageDisplay.style.display = "block";
                     messageDisplay.style.backgroundColor = "#f8d7da"; // Red
-                }
+                    }
             } catch (error) {
                 console.error("Error:", error);
                 alert("An error occurred during registration. Please try again.");
             }
-        }); // Close .then
-    }); // Close grecaptcha.ready
+        });
+    });
 });

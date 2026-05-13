@@ -18,6 +18,7 @@ export class UserModel {
             username,
             email,
             password,
+            is_verified,
             created_at
         FROM users
         WHERE email = $1`;
@@ -33,6 +34,7 @@ export class UserModel {
             username,
             email,
             password,
+            is_verified,
             created_at
         FROM users
         WHERE username = $1`;
@@ -48,6 +50,7 @@ export class UserModel {
             username,
             email,
             password,
+            is_verified,
             created_at
         FROM users
         WHERE email = $1 OR username = $1`;
@@ -122,15 +125,31 @@ export class UserModel {
     // Create new user
     static async create(username, email, password) {
         const query = `
-        INSERT INTO users (username, email, password)
-        VALUES ($1, $2, $3)
+        INSERT INTO users (username, email, password, is_verified)
+        VALUES ($1, $2, $3, FALSE)
         RETURNING
             userid AS id,
             username,
             email,
             password,
+            is_verified,
             created_at`;
         const values = [username, email, password];
+        const result = await pool.query(query, values);
+        return result.rows[0];
+    }
+
+    // Mark user as verified
+    static async markVerified(userid) {
+        const query = `
+        UPDATE users
+        SET is_verified = true
+        WHERE userid = $1
+        RETURNING
+            userid AS id,
+            username,
+            email`;
+        const values = [userid];
         const result = await pool.query(query, values);
         return result.rows[0];
     }

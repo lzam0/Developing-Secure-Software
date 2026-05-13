@@ -1,12 +1,35 @@
 // Auth Controller
-import { AuthService } from '../service/auth.service.js';
-import UserModel from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import { AuthService } from '../service/auth.service.js';
+import OtpModel from '../models/otp.model.js';
+import UserModel from '../models/user.model.js';
+import SecurityModel from '../models/security.model.js';
+import EmailController from './email.controller.js';
 import dotenv from 'dotenv';
 import { issueCSRFToken } from '../middleware/csrf.middleware.js';
+
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
+
+function generateOtp() {
+    return crypto.randomInt(100000, 1000000).toString();
+}
+
+async function regenerateSession(req) {
+    if (!req.session?.regenerate) {
+        return;
+    }
+
+    await new Promise((resolve, reject) => {
+        req.session.regenerate((error) => {
+            if (error) reject(error);
+            else resolve();
+        });
+    });
+}
 
 export class AuthController {
     /**
@@ -29,11 +52,13 @@ export class AuthController {
         }
 
         const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+
         const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 
         // Verify with Google
         const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
         const recaptchaData = await recaptchaRes.json();
+
 
         // Check Google's score
         if (!recaptchaData.success || recaptchaData.score < 0.5) {
@@ -44,25 +69,49 @@ export class AuthController {
         }
         console.log("Recaptcha Data from Google:", recaptchaData);
 
-        // If the reCAPTCHA passed, call the AuthService to handle user registration
-        const result = await AuthService.signUp(username, email, password);
         
 
-            // Set CSRF token as HTTP-only on response
-            res.cookie('csrfToken', issueCSRFToken() , {
-                httpOnly: false,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 2 * 60 * 60 * 1000
+        // If the reCAPTCHA passed, call the AuthService to handle user registration
+        const result = await AuthService.signUp(username, email, password);
+
+        // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the username/email already exists
+        if (!result.user) {
+            return res.status(201).json({
+                success: true,
+                message: result.message,
+                data: {
+                    status: result.status
+                }
             });
-        
-        res.status(201).json({
+        }
+
+        // Generate signup verification OTP
+        const otp = generateOtp();
+        const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
+        await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
+
+        await regenerateSession(req);
+        req.session.userId = result.user.id;
+        req.session.otpPurpose = 'signup';
+
+        await EmailController.sendSignUpOtpEmail(
+            result.user.email,
+            otp,
+            result.user.username
+        );
+                
+        return res.status(201).json({
             success: true,
             message: result.message,
             data: result
         });
+        
     }
     catch (error) {
+        console.error("sign up call error:", error);
         next(error);
     }
 }
@@ -104,57 +153,193 @@ export class AuthController {
             });
         }
         console.log("Recaptcha Data from Google:", recaptchaData);
-            // Call the AuthService to handle user authentication
-            const result = await AuthService.signIn(loginIdentifier, password);
-            
-            // revoke the old token before making a new one 
-            // prevent a malicious actor from using the old token
-            const oldToken = req.cookies?.token;
-            if (oldToken) {
-                try {
-                    // decode and verify the existing token
-                    const decoded = jwt.verify(oldToken, JWT_SECRET);
-                    // check if the token has a jti (unique for specific tokens)
-                    if (decoded?.jti) {
-                        // convert expiry time to milliseconds
-                        const expiresAt = new Date(decoded.exp * 1000);
-                        // add the token to the revoked_tokens table by callng AuthService
-                        // decoded.jti: unique token identifier 
-                        // decoded.id: user id with the token 
-                        // expiresAt: when the token is due to expire 
-                        await AuthService.revokeToken(decoded.jti, decoded.id, expiresAt);
-                    }
-                } catch {
-                    // old token already expired or invalid 
+        
+        // Call the AuthService to handle user authentication
+        const result = await AuthService.signIn(loginIdentifier, password);
+
+        // Check if there's already an active OTP for the user
+        const existingOtp = await OtpModel.findLatestActiveByUserId(
+            result.user.id,
+            'signin'
+        );
+
+        if (existingOtp){
+            return res.status(429).json({
+                success: false,
+                message: 'A verification code has already been sent. Please check your email or wait 5 minutes for the code to expire.'
+            });
+        }
+
+        // Generate login 2FA OTP
+        const otp = generateOtp();
+        const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+        await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
+        await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
+
+        await regenerateSession(req);
+        req.session.userId = result.user.id;
+        req.session.otpPurpose = 'signin';
+
+        //Create a separate secure token for reporting a suspicious sign-in OTP email
+        const reportToken = crypto.randomBytes(32).toString('hex');
+
+        //Store only the hashed token so the plain report token is never persisted
+        const reportTokenHash = crypto
+            .createHash('sha256')
+            .update(reportToken)
+            .digest('hex');
+
+        //Keep the report link short-lived to limit the window for misuse
+        const reportTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        //Save the hashed report token for later validation when the report link is used
+        await SecurityModel.createReportToken(
+            result.user.id,
+            reportTokenHash,
+            'signin',
+            reportTokenExpiresAt
+        );
+
+        //Send the plain token only inside the email link; validation will compare its hash
+        const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
+
+        await EmailController.sendSignInOtpEmail(
+            result.user.email,
+            otp,
+            result.user.username,
+            reportUrl
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: 'Verification code sent to email.'
+        });
+        }
+    catch (error) {
+        // Pass error to error handling middleware
+        console.error(error);
+        next(error);
+    }
+    }
+
+    static async verifyOtp(req, res, next) {
+    try {
+        const { otp } = req.body;
+
+        //load the newest unused OTP for the user and purpose stored in the temp session
+        const otpRecord = await OtpModel.findLatestActiveByUserId(
+            req.session.userId,
+            req.session.otpPurpose
+        );
+
+        if (!otpRecord) {
+            return res.status(400).json({
+                success: false,
+                message: 'No active verification code found'
+            });
+        }
+
+        //expired OTPs are marked used so they can't be retried later
+        if (new Date() > new Date(otpRecord.expires_at)) {
+            await OtpModel.markUsed(otpRecord.otpid);
+            return res.status(400).json({
+                success: false,
+                message: 'OTP expired'
+            });
+        }
+
+        //lock the flow after repeated failures and clear the temp session
+        if (otpRecord.attempts >= 5) {
+            await OtpModel.markUsed(otpRecord.otpid);
+            req.session.destroy(() => {});
+            return res.status(403).json({
+                success: false,
+                message: 'Too many incorrect OTP attempts. Please start again.'
+            });
+        }
+
+        //compare submitted code against the stored bcrypt hash
+        const isOtpValid = await bcrypt.compare(otp, otpRecord.otp_hash);
+
+        if (!isOtpValid) {
+            await OtpModel.incrementAttempts(otpRecord.otpid);
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid verification code'
+            });
+        }
+
+        //a valid OTP is single-use, even after successful verification
+        await OtpModel.markUsed(otpRecord.otpid);
+
+        //signup OTPs complete email verification, then require user to sign in
+        if (req.session.otpPurpose === 'signup') {
+            await UserModel.markVerified(req.session.userId);
+
+            req.session.destroy(() => {});
+
+            return res.status(200).json({
+                success: true,
+                message: 'Email verified successfully',
+                redirectTo: 'login.html'
+            });
+        }
+
+        //sign in OTPs complete authentication by issuing JWT and CSRF cookies
+        if (req.session.otpPurpose === 'signin') {
+            const jti = crypto.randomUUID();
+
+            //include a unique token id so JWT can be revoked on sign out
+            const token = jwt.sign(
+                {
+                    id: req.session.userId,
+                    jti
+                },
+                process.env.JWT_WEB_TOKEN_SECRET,
+                {
+                    expiresIn: process.env.JWT_EXPIRES_IN || '2h'
                 }
-            }
-            // Set JWT as HTTP-only cookie so the browser sends it automatically on future requests
-            res.cookie('token', result.token, {
+            );
+
+            //store the JWT in a HTTP-only cookie to reduce client-side script access
+            res.cookie('token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 2 * 60 * 60 * 1000 // 2 hours, matches JWT_EXPIRES_IN default
+                maxAge: 2 * 60 * 60 * 1000
             });
-            // Set CSRF token as HTTP-only on response
-            res.cookie('csrfToken', issueCSRFToken() , {
+
+            //expose the CSRF token to the frontend so it can be sent with unsafe requests
+            res.cookie('csrfToken', issueCSRFToken(), {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
                 maxAge: 2 * 60 * 60 * 1000
             });
 
-            const { user } = result;
-            res.status(200).json({
+            //clear the temp OTP session once persistent auth cookies are issued
+            req.session.destroy(() => {});
+
+            return res.status(200).json({
                 success: true,
                 message: 'Login successful',
-                data: { user }
+                redirectTo: 'blogListingPage.html'
             });
         }
-        catch (error) {
-            // Pass error to error handling middleware
-            next(error);
-        }
+
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid OTP purpose'
+        });
+
+    } catch (error) {
+        console.error(error);
+        next(error);
     }
+}
+
     /**
  * POST /api/auth/signout
  * Sign Out the user by clearing the token cookie

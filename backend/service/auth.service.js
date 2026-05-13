@@ -8,13 +8,8 @@ import pool from '../controllers/database.js';
 import {randomInt} from 'crypto';
 import rateLimit from 'express-rate-limit';
 dotenv.config();
+
 // Validate required environment variables
-if (!process.env.JWT_WEB_TOKEN_SECRET) {
-    throw new Error('FATAL: JWT_WEB_TOKEN_SECRET is not defined in .env file');
-}
-if (!process.env.JWT_EXPIRES_IN) {
-    throw new Error('FATAL: JWT_EXPIRES_IN is not defined in .env file');
-}
 if (!process.env.SALT_ROUNDS) {
     throw new Error('FATAL: SALT_ROUNDS is not defined in .env file');
 }
@@ -24,8 +19,6 @@ if (!process.env.PEPPER) {
 
 
 // Load environment variables 
-const JWT_WEB_TOKEN_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10);
 const PEPPER = process.env.PEPPER;
 
@@ -48,9 +41,9 @@ function generateToken(payload) {
     const jti = randomUUID(); // create unique jti for every jwt token
     // create the token
     // takes the user's info and hides the jti inside it, locked using JWT_WEB_TOKEN_SECRET
-    const token = jwt.sign({ ...payload, jti }, JWT_WEB_TOKEN_SECRET, { expiresIn: JWT_EXPIRES_IN }); 
+    const token = jwt.sign({ ...payload, jti }, process.env.JWT_WEB_TOKEN_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN }); 
     // calculate when token will expire
-    const expiresAt = new Date(Date.now() + parseDurationMs(JWT_EXPIRES_IN));
+    const expiresAt = new Date(Date.now() + parseDurationMs(process.env.JWT_EXPIRES_IN));
     return { token, jti, expiresAt }; // return for sign-in process
 }
 
@@ -109,16 +102,18 @@ export class AuthService {
         // Create the user
         const newUser = await UserModel.create(username, email, hashedPassword);
         await addJitter(); // add random delay to make timing attacks harder
-        
-        // Generate JWT token for the new user
-        const { token } = generateToken({ id: newUser.id, username: newUser.username });
-        
+                
         // userID, username, email, token SHOULD ONLY BE RETURNED IN THE SIGN IN, NOT SIGN UP. IN SIGN UP, WE WANT TO RETURN A GENERIC SUCCESS MESSAGE TO PREVENT ACCOUNT ENUMERATION
             return {
         message: 'A verification email has been sent to your email address. Please check your inbox and follow the instructions to complete your registration.',
-        status: 'pending'
-    };
+        status: 'pending',
+        user: {
+            id: newUser.id,
+            username: newUser.username,
+            email: newUser.email
+            }
         }
+    };
 
     // Sign In User
     static async signIn(identifier, password) {
@@ -144,20 +139,22 @@ export class AuthService {
             err.statusCode = 401;
             throw err;
         }
-
-        // Generate JWT token for the authenticated user
-        const { token } = generateToken({ id: user.id, username: user.username });
-        // const token = generateToken({ id: user.id, username: user.username });
+        
+        if (!user.is_verified) {
+        const err = new Error('Please verify your email before signing in');
+        err.statusCode = 403;
+        throw err;
+        }
+        
         await addJitter(); // add random delay to make timing attacks harder
 
-        // Return user details and token - userID, username, email, token
+        // Return user details only - JWT is issued after OTP verification in the controller
         return {
             user: {
                 id: user.id,
                 username: user.username,
                 email: user.email
-            },
-            token
+            }
         };
     }
 
@@ -190,10 +187,7 @@ export class AuthService {
         return null;
     }
 
-    static validatePassword(password){
-        /* Validate Password Constraints
-        * 
-        */
+    static validatePassword(password) {
 
         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d])(?!.*['";<>`\\\\]).{8,72}$/;
 
