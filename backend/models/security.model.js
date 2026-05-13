@@ -1,6 +1,7 @@
 import pool from '../controllers/database.js';
 
 export class SecurityModel {
+    //Create a hashed report token for suspicious activity review
     static async createReportToken(userid, tokenHash, purpose, expiresAt) {
         const query = `
             INSERT INTO suspicious_activity_reports 
@@ -19,6 +20,7 @@ export class SecurityModel {
         return result.rows[0];
     }
 
+    //Find an unused report token that has not expired
     static async findValidReportToken(tokenHash) {
         const query = `
             SELECT *
@@ -33,6 +35,7 @@ export class SecurityModel {
         return result.rows[0];
     }
 
+    //Mark a report token as used after it has been verified
     static async markReportTokenUsed(reportid) {
         await pool.query(
             `UPDATE suspicious_activity_reports

@@ -169,15 +169,19 @@ export class AuthController {
         req.session.userId = result.user.id;
         req.session.otpPurpose = 'signin';
 
+        //Create a separate secure token for reporting a suspicious sign-in OTP email
         const reportToken = crypto.randomBytes(32).toString('hex');
 
+        //Store only the hashed token so the plain report token is never persisted
         const reportTokenHash = crypto
             .createHash('sha256')
             .update(reportToken)
             .digest('hex');
 
+        //Keep the report link short-lived to limit the window for misuse
         const reportTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
+        //Save the hashed report token for later validation when the report link is used
         await SecurityModel.createReportToken(
             result.user.id,
             reportTokenHash,
@@ -185,6 +189,7 @@ export class AuthController {
             reportTokenExpiresAt
         );
 
+        //Send the plain token only inside the email link; validation will compare its hash
         const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
 
         await EmailController.sendSignInOtpEmail(
@@ -210,6 +215,7 @@ export class AuthController {
     try {
         const { otp } = req.body;
 
+        //load the newest unused OTP for the user and purpose stored in the temp session
         const otpRecord = await OtpModel.findLatestActiveByUserId(
             req.session.userId,
             req.session.otpPurpose
@@ -222,6 +228,7 @@ export class AuthController {
             });
         }
 
+        //expired OTPs are marked used so they can't be retried later
         if (new Date() > new Date(otpRecord.expires_at)) {
             await OtpModel.markUsed(otpRecord.otpid);
             return res.status(400).json({
@@ -230,6 +237,7 @@ export class AuthController {
             });
         }
 
+        //lock the flow after repeated failures and clear the temp session
         if (otpRecord.attempts >= 5) {
             await OtpModel.markUsed(otpRecord.otpid);
             req.session.destroy(() => {});
@@ -239,6 +247,7 @@ export class AuthController {
             });
         }
 
+        //compare submitted code against the stored bcrypt hash
         const isOtpValid = await bcrypt.compare(otp, otpRecord.otp_hash);
 
         if (!isOtpValid) {
@@ -249,8 +258,10 @@ export class AuthController {
             });
         }
 
+        //a valid OTP is single-use, even after successful verification
         await OtpModel.markUsed(otpRecord.otpid);
 
+        //signup OTPs complete email verification, then require user to sign in
         if (req.session.otpPurpose === 'signup') {
             await UserModel.markVerified(req.session.userId);
 
@@ -263,9 +274,11 @@ export class AuthController {
             });
         }
 
+        //sign in OTPs complete authentication by issuing JWT and CSRF cookies
         if (req.session.otpPurpose === 'signin') {
             const jti = crypto.randomUUID();
 
+            //include a unique token id so JWT can be revoked on sign out
             const token = jwt.sign(
                 {
                     id: req.session.userId,
@@ -277,6 +290,7 @@ export class AuthController {
                 }
             );
 
+            //store the JWT in a HTTP-only cookie to reduce client-side script access
             res.cookie('token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
@@ -284,6 +298,7 @@ export class AuthController {
                 maxAge: 2 * 60 * 60 * 1000
             });
 
+            //expose the CSRF token to the frontend so it can be sent with unsafe requests
             res.cookie('csrfToken', issueCSRFToken(), {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
@@ -291,6 +306,7 @@ export class AuthController {
                 maxAge: 2 * 60 * 60 * 1000
             });
 
+            //clear the temp OTP session once persistent auth cookies are issued
             req.session.destroy(() => {});
 
             return res.status(200).json({

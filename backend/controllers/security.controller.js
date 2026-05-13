@@ -14,11 +14,13 @@ export class SecurityController {
                 `);
             }
 
+            //Hash the raw URL token before lookup so stored report tokens are never compared in plaintext
             const tokenHash = crypto
                 .createHash('sha256')
                 .update(token)
                 .digest('hex');
 
+            //Only unused, unexpired report tokens should be allowed to cancel an OTP
             const report = await SecurityModel.findValidReportToken(tokenHash);
 
             if (!report) {
@@ -28,6 +30,7 @@ export class SecurityController {
                 `);
             }
 
+            //Invalidate the matching OTPs first, then consume the report token to prevent link reuse
             await OtpModel.invalidateExistingOtps(report.userid, report.purpose);
             await SecurityModel.markReportTokenUsed(report.reportid);
 

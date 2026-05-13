@@ -1,11 +1,156 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/js/verify.js"></script>
+    <script src="/components/header.js"></script>
     <title>Payment Cancelled</title>
 </head>
 <body>
-    <h1>Payment Cancelled</h1>
-    <p>Your subscription was cancelled. No payment was taken.</p>
-    <a href="/blogListingPage.html">Back to blogs</a>
+    <div id="header"></div>
+
+    <main class="payment-result-page">
+        <section class="payment-result-card payment-result-card--cancel">
+            <p class="payment-result-label">Checkout cancelled</p>
+            <h1>Payment Cancelled</h1>
+            <p>Your subscription was cancelled. No payment was taken.</p>
+
+            <div class="payment-actions">
+                <a class="primary-action" href="/payment.html">Try again</a>
+                <a class="secondary-action" href="/blogListingPage.html">Back to blogs</a>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
+
+<!------------------ CSS ------------------>
+<head>
+    <style>
+        body {
+            font-family: 'DM Sans', Arial, sans-serif;
+            background: #faf7f2;
+            color: #3d2b1f;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .payment-result-page {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .payment-result-card {
+            width: 100%;
+            max-width: 560px;
+            background: #fff9f3;
+            border: 1px solid rgba(184, 212, 187, 0.45);
+            border-radius: 14px;
+            box-shadow: 0 2px 30px rgba(61, 43, 31, 0.08);
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        .payment-result-card::before {
+            content: "";
+            display: block;
+            width: 56px;
+            height: 6px;
+            margin: 0 auto 1.4rem;
+            border-radius: 50px;
+            background: #f2875c;
+        }
+
+        .payment-result-label {
+            margin: 0 0 0.7rem;
+            color: #9f573b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .payment-result-card h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3d2b1f;
+            margin: 0 0 0.8rem;
+        }
+
+        .payment-result-card p {
+            color: #6b4c3b;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .payment-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .primary-action,
+        .secondary-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0 1.2rem;
+            border-radius: 10px;
+            font-family: 'DM Sans', Arial, sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .primary-action {
+            background: #b8d4bb;
+            color: #fff;
+            border: 1px solid #b8d4bb;
+        }
+
+        .primary-action:hover {
+            background: #6a8e6e;
+            border-color: #6a8e6e;
+            box-shadow: 0 4px 14px rgba(122, 158, 126, 0.28);
+        }
+
+        .secondary-action {
+            background: #fff;
+            color: #6b4c3b;
+            border: 1px solid #dde8de;
+        }
+
+        .secondary-action:hover {
+            border-color: #b8d4bb;
+            color: #7a9e7e;
+        }
+
+        @media (max-width: 520px) {
+            .payment-result-page {
+                align-items: flex-start;
+                padding: 2rem 1rem;
+            }
+
+            .payment-result-card {
+                padding: 2rem 1.25rem;
+            }
+
+            .payment-result-card h1 {
+                font-size: 1.65rem;
+            }
+
+            .payment-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
