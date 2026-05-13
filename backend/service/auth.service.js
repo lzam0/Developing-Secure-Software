@@ -62,9 +62,9 @@ export class AuthService {
     // Check if user already exists
     // Check if the email is taken OR if the username is taken
     const [existingEmail, existingUsername] = await Promise.all([
-    UserModel.findByEmail(email),
-    UserModel.findByUsername(username)
-]);
+        UserModel.findByEmail(email),
+        UserModel.findByUsername(username)
+    ]);
     
         // ANTI-ACCOUNT ENUMERATION: If user exists, dont throw error, hide it
         if (existingEmail || existingUsername) {

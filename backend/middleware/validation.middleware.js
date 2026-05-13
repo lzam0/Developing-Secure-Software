@@ -16,7 +16,7 @@ export const validateSignUp = (req, res, next) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
     if (!passwordRegex.test(password)) {
-        return res.status(400).json({ message: "Password must be 8-72 characters long and include at least one letter and one number" });
+        return res.status(400).json({ message: "Password must be 8-72 characters long, include at least one letter, one number and one special character" });
     }
 
     if (!emailRegex.test(email)) {
