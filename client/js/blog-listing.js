@@ -88,3 +88,13 @@ document.querySelectorAll(".filter-button").forEach((button) => {
 });
 
 fetchPosts();
+
+// Only show the "New Post" button to authenticated users.
+// verifyAuth() calls /api/auth/verify with the JWT cookie — returns true if the session is valid.
+// The button starts hidden in HTML so guests never see it, even before this runs.
+(async () => {
+    const isAuth = await verifyAuth();
+    if (isAuth) {
+        document.getElementById('new-post-btn').removeAttribute('hidden');
+    }
+})();
