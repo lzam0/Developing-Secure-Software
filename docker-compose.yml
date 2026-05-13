@@ -9,7 +9,8 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/database/add-post.sql:/docker-entrypoint-initdb.d/02-add-post.sql
     networks:
       - data-system-network
 
