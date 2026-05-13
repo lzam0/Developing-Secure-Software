@@ -24,13 +24,13 @@ function renderCards(posts) {
 
     // Post formatting
     posts.forEach((post) => {
-        const tag = Array.isArray(post.tags) ? post.tags[0] : post.tags;
+        const tags = Array.isArray(post.tags) ? post.tags : [post.tags];
         const card = document.createElement("a");
         card.href = `/blogPage.html?slug=${post.slug}`;
         card.className = "card";
         card.innerHTML = `
             <div class="card-body">
-                <span class="card-tag">${tag}</span>
+                <div class="card-tag-row">${tags.map((t, i) => `<span class="card-tag${i > 0 ? ' card-tag-secondary' : ''}">${t}</span>`).join('')}</div>
                 <h2 class="card-title">${post.title}</h2>
                 <div class="card-meta">
                     <div class="card-avatar">${initials(post.username)}</div>

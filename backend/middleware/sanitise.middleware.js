@@ -17,9 +17,18 @@ export const sanitiseBody = (req, res, next) => {
 
                 // where the sanitise happens e.g <script>bad!</script>
                 req.body[key] = sanitiseHtml(req.body[key], {
-                    allowedTags: [], // remove all html tags (e.g. <script>, <a>) 
+                    allowedTags: [], // remove all html tags (e.g. <script>, <a>)
                     allowedAttributes: {} // remove all attributes (e.g. onclick)
                 });
+
+                // sanitize-html re-encodes entities like & → &amp; after stripping tags.
+                // Since all tags are removed, no HTML remains, so it's safe to decode them back.
+                req.body[key] = req.body[key]
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#39;/g, "'");
 
                 // log a warniing if the input was modified 
                 if (req.body[key] !== original) {
