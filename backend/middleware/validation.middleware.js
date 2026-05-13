@@ -9,7 +9,7 @@ export const validateSignUp = (req, res, next) => {
         return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // DYLAN - DO THIS
+    //  SQL INJECTION PREVENTION - check for common SQL keywords in the input
     // Implement password validation
     // Implment email validation with regex 
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d])(?!.*['";<>`\\\\]).{8,72}$/;

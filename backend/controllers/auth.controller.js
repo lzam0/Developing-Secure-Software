@@ -167,7 +167,7 @@ export class AuthController {
         console.log("Recaptcha Data from Google:", recaptchaData);
         
         // Call the AuthService to handle user authentication
-        const result = await AuthService.signIn(loginIdentifier, password);
+        const result = await AuthService.signIn(loginEmail, password);
 
         // Check if there's already an active OTP for the user
         const existingOtp = await OtpModel.findLatestActiveByUserId(

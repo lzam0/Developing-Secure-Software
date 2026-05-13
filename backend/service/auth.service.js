@@ -69,6 +69,12 @@ export class AuthService {
         // ANTI-ACCOUNT ENUMERATION: If user exists, dont throw error, hide it
         if (existingEmail || existingUsername) {
             //fake hash so the response time matches real
+            // PASSWORD = YELLOW 
+            // SALT = BLUE
+
+            // HASH the salt and password together
+
+            // Add extra pepper to make it secure
             await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
             await addJitter(); // add random delay to make timing attacks harder
 
