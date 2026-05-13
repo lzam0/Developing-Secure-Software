@@ -5,9 +5,12 @@ import { validateCSRF } from '../middleware/csrf.middleware.js';
 
 const router = Router();
 
+// Create a Stripe subscription checkout session for the currently signed-in user
 router.post(
     '/create-subscription-checkout',
+    //Require a valid auth token so the checkout session is tied to a real user account
     authenticateToken,
+    // Require CSRF validation because this route starts a payment-related state change
     validateCSRF,
     PaymentController.createSubscriptionCheckout
 );

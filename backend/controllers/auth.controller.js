@@ -157,18 +157,30 @@ export class AuthController {
             const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
             const recaptchaData = await recaptchaRes.json();
 
-            // Check Google's score
-            if (!recaptchaData.success || recaptchaData.score < 0.5) {
-                return res.status(403).json({ 
-                    success: false, 
-                    message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
-                });
-            }
-            
-            console.log("Recaptcha Data from Google:", recaptchaData);
-            
-            // Call the AuthService to handle user authentication
-            const result = await AuthService.signIn(loginEmail, password);
+        // Check Google's score
+        if (!recaptchaData.success || recaptchaData.score < 0.5) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
+            });
+        }
+        console.log("Recaptcha Data from Google:", recaptchaData);
+        
+        // Call the AuthService to handle user authentication
+        const result = await AuthService.signIn(loginIdentifier, password);
+
+        // Check if there's already an active OTP for the user
+        const existingOtp = await OtpModel.findLatestActiveByUserId(
+            result.user.id,
+            'signin'
+        );
+
+        if (existingOtp){
+            return res.status(429).json({
+                success: false,
+                message: 'A verification code has already been sent. Please check your email or wait 5 minutes for the code to expire.'
+            });
+        }
 
             // Generate login 2FA OTP
             const otp = generateOtp();
@@ -183,29 +195,28 @@ export class AuthController {
             req.session.userId = result.user.id;
             req.session.otpPurpose = 'signin';
 
-            // Generate a unique report token for this sign in attempt,
-            // store its hash in the database with an expiry time,
-            // and include the token in the OTP email so the user can report if this sign in attempt was not made by them
-            const reportToken = crypto.randomBytes(32).toString('hex');
-        
-            // Hash the report token before storing it in the database, 
-            // so if the database is compromised, attackers cannot use the tokens to generate valid report URLs
-            const reportTokenHash = crypto
-                .createHash('sha256')
-                .update(reportToken)
-                .digest('hex');
-        
-            // Report token to expire in 15 minutes
-            const reportTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+        //Create a separate secure token for reporting a suspicious sign-in OTP email
+        const reportToken = crypto.randomBytes(32).toString('hex');
 
-            await SecurityModel.createReportToken(
-                result.user.id,
-                reportTokenHash,
-                'signin',
-                reportTokenExpiresAt
-            );
+        //Store only the hashed token so the plain report token is never persisted
+        const reportTokenHash = crypto
+            .createHash('sha256')
+            .update(reportToken)
+            .digest('hex');
 
-            const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
+        //Keep the report link short-lived to limit the window for misuse
+        const reportTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        //Save the hashed report token for later validation when the report link is used
+        await SecurityModel.createReportToken(
+            result.user.id,
+            reportTokenHash,
+            'signin',
+            reportTokenExpiresAt
+        );
+
+        //Send the plain token only inside the email link; validation will compare its hash
+        const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
 
             await EmailController.sendSignInOtpEmail(
                 result.user.email,
@@ -229,11 +240,11 @@ export class AuthController {
             // Extract the OTP from the request body
             const { otp } = req.body;
 
-            // Validate that the OTP is present
-            const otpRecord = await OtpModel.findLatestActiveByUserId(
-                req.session.userId,
-                req.session.otpPurpose
-            );
+        //load the newest unused OTP for the user and purpose stored in the temp session
+        const otpRecord = await OtpModel.findLatestActiveByUserId(
+            req.session.userId,
+            req.session.otpPurpose
+        );
 
             // No active OTP found for this user and purpose
             // OTP was already used, expired, or never generated
@@ -245,27 +256,27 @@ export class AuthController {
                 });
             }
 
-            // Check if the OTP has expired by comparing the current time with the expires_at field in the database
-            if (new Date() > new Date(otpRecord.expires_at)) {
-                await OtpModel.markUsed(otpRecord.otpid);
-                return res.status(400).json({
-                    success: false,
-                    message: 'OTP expired'
-                });
-            }
+        //expired OTPs are marked used so they can't be retried later
+        if (new Date() > new Date(otpRecord.expires_at)) {
+            await OtpModel.markUsed(otpRecord.otpid);
+            return res.status(400).json({
+                success: false,
+                message: 'OTP expired'
+            });
+        }
 
-            // Check if the OTP has exceeded the maximum number of allowed attempts (e.g., 5 attempts)
-            if (otpRecord.attempts >= 5) {
-                await OtpModel.markUsed(otpRecord.otpid);
-                req.session.destroy(() => {});
-                return res.status(403).json({
-                    success: false,
-                    message: 'Too many incorrect OTP attempts. Please start again.'
-                });
-            }
+        //lock the flow after repeated failures and clear the temp session
+        if (otpRecord.attempts >= 5) {
+            await OtpModel.markUsed(otpRecord.otpid);
+            req.session.destroy(() => {});
+            return res.status(403).json({
+                success: false,
+                message: 'Too many incorrect OTP attempts. Please start again.'
+            });
+        }
 
-            // Compare the provided OTP with the hashed OTP stored in the database
-            const isOtpValid = await bcrypt.compare(otp, otpRecord.otp_hash);
+        //compare submitted code against the stored bcrypt hash
+        const isOtpValid = await bcrypt.compare(otp, otpRecord.otp_hash);
 
             if (!isOtpValid) {
                 await OtpModel.incrementAttempts(otpRecord.otpid);
@@ -275,15 +286,14 @@ export class AuthController {
                 });
             }
 
-            // If the OTP is valid, mark it as used in the database to prevent reuse
-            await OtpModel.markUsed(otpRecord.otpid);
+        //a valid OTP is single-use, even after successful verification
+        await OtpModel.markUsed(otpRecord.otpid);
 
-            if (req.session.otpPurpose === 'signup') {
-                await UserModel.markVerified(req.session.userId);
-                
-                // Destroy the session after successful verification to prevent reuse
-                // Require the user to sign in with their new account
-                req.session.destroy(() => {});
+        //signup OTPs complete email verification, then require user to sign in
+        if (req.session.otpPurpose === 'signup') {
+            await UserModel.markVerified(req.session.userId);
+
+            req.session.destroy(() => {});
 
                 return res.status(200).json({
                     success: true,
@@ -292,45 +302,40 @@ export class AuthController {
                 });
             }
 
-            // If OTP is valid and purpose is signin, issue JWT and set cookies for authentication
-            if (req.session.otpPurpose === 'signin') {
-                // Generate a unique identifier (jti) for the token to allow for revocation if needed
-                // include it in the JWT payload along with the user ID
-                const jti = crypto.randomUUID();
+        //sign in OTPs complete authentication by issuing JWT and CSRF cookies
+        if (req.session.otpPurpose === 'signin') {
+            const jti = crypto.randomUUID();
 
-                // Sign a JWT with the user ID and jti
-                // Use a secret key and setting an appropriate expiration time (e.g., 2 hours)
-                const token = jwt.sign(
-                    {
-                        id: req.session.userId,
-                        jti
-                    },
-                    process.env.JWT_WEB_TOKEN_SECRET,
-                    {
-                        expiresIn: process.env.JWT_EXPIRES_IN || '2h'
-                    }
-                );
-                
-                // Set the JWT as an HTTP-only cookie with secure and sameSite flags for security
-                //  max age that matches the token expiry
-                res.cookie('token', token, {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'strict',
-                    maxAge: 2 * 60 * 60 * 1000 // 2 hours in milliseconds
-                });
+            //include a unique token id so JWT can be revoked on sign out
+            const token = jwt.sign(
+                {
+                    id: req.session.userId,
+                    jti
+                },
+                process.env.JWT_WEB_TOKEN_SECRET,
+                {
+                    expiresIn: process.env.JWT_EXPIRES_IN || '2h'
+                }
+            );
 
-                // CSFR token is stored in a separate cookie that is accessible to JavaScript
-                // frontend can read it and include it in the headers of subsequent requests for CSRF protection
-                res.cookie('csrfToken', issueCSRFToken(), {
-                    httpOnly: false,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'strict',
-                    maxAge: 2 * 60 * 60 * 1000 // 2 hours in milliseconds
-                });
+            //store the JWT in a HTTP-only cookie to reduce client-side script access
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000
+            });
 
-                // Destroy the session after successful sign in to prevent reuse
-                req.session.destroy(() => {});
+            //expose the CSRF token to the frontend so it can be sent with unsafe requests
+            res.cookie('csrfToken', issueCSRFToken(), {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000
+            });
+
+            //clear the temp OTP session once persistent auth cookies are issued
+            req.session.destroy(() => {});
 
                 // Respond with a success message
                 return res.status(200).json({
