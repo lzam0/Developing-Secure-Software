@@ -34,7 +34,7 @@ export class PaymentController {
                 cancel_url: `${process.env.CLIENT_URL}/payment-cancel.html`,
                 
                 // CHEK THE STRIPE TRANSACTION SESSION
-                // AUTOMATICALLY 24HRS NOW 1 HR
+                // AUTOMATICALLY 24HRS NOW - 30 mins
                 expires_at: Math.floor(Date.now() /1000) + (30*60)
             });
 
