@@ -4,6 +4,17 @@ import pool from './database.js';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export class PaymentController {
+    static async activateUserSubscription(userId, customerId) {
+        await pool.query(
+            `UPDATE users
+             SET is_subscribed = TRUE,
+                 subscription_status = 'active',
+                 stripe_customer_id = $1
+             WHERE userid = $2`,
+            [customerId, userId]
+        );
+    }
+
     //Create a Stripe Checkout session for the logged-in user's subscription
     static async createSubscriptionCheckout(req, res, next) {
         try {
@@ -27,8 +38,8 @@ export class PaymentController {
                         userId: String(req.user.id)
                     }
                 },
-                // WORKS TAKES TO THIS PAGE
-                success_url: `${process.env.CLIENT_URL}/payment-success.html`,
+                // Include the Checkout Session ID so the success page can confirm the payment server-side
+                success_url: `${process.env.CLIENT_URL}/payment-success.html?session_id={CHECKOUT_SESSION_ID}`,
 
                 // DOESNT WORK TAKE TO THIS PAGE
                 cancel_url: `${process.env.CLIENT_URL}/payment-cancel.html`,
@@ -44,6 +55,44 @@ export class PaymentController {
             });
         } catch (error) {
             console.error('Stripe checkout error:', error);
+            next(error);
+        }
+    }
+
+    //Confirm a returned Stripe Checkout session and activate the signed-in user's subscription
+    static async confirmSubscriptionCheckout(req, res, next) {
+        try {
+            const { sessionId } = req.body;
+
+            if (!sessionId) {
+                const error = new Error('Checkout session ID is required');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const session = await stripe.checkout.sessions.retrieve(sessionId);
+            const sessionUserId = session.metadata?.userId;
+
+            if (String(sessionUserId) !== String(req.user.id)) {
+                const error = new Error('Checkout session does not belong to this user');
+                error.statusCode = 403;
+                throw error;
+            }
+
+            if (session.mode !== 'subscription' || session.status !== 'complete' || session.payment_status !== 'paid') {
+                const error = new Error('Checkout session is not complete');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            await PaymentController.activateUserSubscription(req.user.id, session.customer);
+
+            res.status(200).json({
+                success: true,
+                message: 'Subscription activated successfully'
+            });
+        } catch (error) {
+            console.error('Stripe checkout confirmation error:', error);
             next(error);
         }
     }
@@ -71,14 +120,7 @@ export class PaymentController {
             const userId = session.metadata.userId;
 
             //Mark the user as subscribed once Stripe confirms checkout completion
-            await pool.query(
-                `UPDATE users
-                 SET is_subscribed = TRUE,
-                     subscription_status = 'active',
-                     stripe_customer_id = $1
-                 WHERE userid = $2`,
-                [session.customer, userId]
-            );
+            await PaymentController.activateUserSubscription(userId, session.customer);
 
             console.log(`Subscription activated for user ${userId}`);
         }

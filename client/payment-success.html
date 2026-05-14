@@ -2,7 +2,9 @@
 <html>
 <head>
     <link rel="stylesheet" href="/styles.css">
+    <script src="/js/csrf.js"></script>
     <script src="/js/verify.js"></script>
+    <script src="/js/payment-success.js" defer></script>
     <script src="/components/header.js"></script>
     <title>Payment Successful</title>
 </head>
@@ -11,9 +13,9 @@
 
     <main class="payment-result-page">
         <section class="payment-result-card payment-result-card--success">
-            <p class="payment-result-label">Subscription active</p>
-            <h1>Payment Successful</h1>
-            <p>Your subscription is now active. You can now read full blog posts.</p>
+            <p class="payment-result-label" id="payment-status-label">Confirming subscription</p>
+            <h1 id="payment-status-title">Payment Successful</h1>
+            <p id="payment-status-message">Confirming your subscription...</p>
 
             <div class="payment-actions">
                 <a class="primary-action" href="/blogListingPage.html">Back to blogs</a>

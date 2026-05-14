@@ -15,4 +15,12 @@ router.post(
     PaymentController.createSubscriptionCheckout
 );
 
+// Confirm the returned Stripe Checkout session and activate the current user locally
+router.post(
+    '/confirm-subscription-checkout',
+    authenticateToken,
+    validateCSRF,
+    PaymentController.confirmSubscriptionCheckout
+);
+
 export default router;

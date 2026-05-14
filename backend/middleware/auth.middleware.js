@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import pool from '../controllers/database.js';
+import UserModel from '../models/user.model.js';
 dotenv.config();
 
 // Validate JWT_SECRET exists
@@ -92,7 +93,7 @@ export const authenticateToken = async (req, res, next) => {
         return;
     }
 
-    req.user = userResult.rows[0];
+    req.user = UserModel.decryptUserRow(userResult.rows[0]);
     next();
 
 };
@@ -119,7 +120,7 @@ export const authenticateTokenOptional = async (req, res, next) => {
                 [decoded.id]
             );
             if (userResult.rows.length > 0){
-                req.user = userResult.rows[0];
+                req.user = UserModel.decryptUserRow(userResult.rows[0]);
             }
         }
     } catch {
