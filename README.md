@@ -34,33 +34,6 @@ Frontend
 Development Tools
 
 * Nodemon
-
----
-
-# Project Structure
-
-```
-project-root
-│
-├── server
-│   ├── server.ts
-│   ├── routes/             → Define API endpoints
-│   ├── controllers/        → Handle HTTP requests/ responses
-│   ├── middleware/         → Auth, validation, error handling
-│   ├── services/           → Business logic (CRUD operations, validation)
-│   ├── db/                 → Database connection and queries
-│   ├── node_modules/
-│   ├── package.json
-│   ├── tsconfig.json
-│
-├── client
-│   ├── index.html
-│   └── styles.css
-│
-├── .env
-└── README.md
-```
-
 ---
 
 # Installation
@@ -138,7 +111,7 @@ npm run dev
 The server will start at:
 
 ```
-http://localhost:5000
+http://localhost:PORT
 ```
 
 ---
@@ -149,10 +122,6 @@ The frontend is located inside the **public** directory and includes:
 
 * Basic HTML interface
 * CSS styling
-
-
-# Security
-To prevent SQL Injection read into here: https://snyk.io/blog/preventing-sql-injection-attacks-node-js/
 
 ---
 
