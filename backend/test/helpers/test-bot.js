@@ -1,5 +1,8 @@
 import puppeteer from 'puppeteer';
 
+// This script simulates a bot trying to sign up on the website.
+//  It fills out the form and checks for server responses.
+// Testing RECAPTCHA and server-side validation.
 (async () => {
     const browser = await puppeteer.launch({ 
         headless: false, 
@@ -12,8 +15,9 @@ import puppeteer from 'puppeteer';
 
     try {
         console.log("Navigating...");
-        await page.goto('http://localhost:5000/signup.html'); 
+        await page.goto(`${process.env.FRONTEND_URL}/signup.html`); 
         
+        // Wait for the form to load    
         console.log("Waiting for reCAPTCHA...");
         await new Promise(r => setTimeout(r, 2000)); 
 
@@ -22,8 +26,6 @@ import puppeteer from 'puppeteer';
         await page.type('#confirm_email_input', 'bot_tester@example.com');
         await page.type('#password_input', 'Password123!');
         await page.type('#confirm_password_input', 'Password123!');
-
-        
 
         console.log("Clicking submit...");
         await page.click('#login_btn');
