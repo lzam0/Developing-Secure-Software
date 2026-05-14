@@ -366,20 +366,24 @@ export class AuthController {
             // read the current token (JWT) from the cookie
             const token = req.cookies?.token
 
-            if (token) { 
-                // inside the token ti see the serial number (jti) and its expiry time
-                const decoded = jwt.verify(token, JWT_SECRET);
+            if (token) {
+                try {
+                    // inside the token ti see the serial number (jti) and its expiry time
+                    const decoded = jwt.verify(token, JWT_SECRET);
 
-                // check if the token has a serial number and expiry time 
-                // then add it to revoked_token table 
-                if (decoded?.jti && decoded?.exp) { 
-                    // convert number to a date 
-                    const expiresAt = new Date(decoded.exp * 1000); 
-                    // tell the database to blacklist this specific jti
-                    await AuthService.revokeToken(decoded.jti, decoded.id, expiresAt); 
+                    // check if the token has a serial number and expiry time
+                    // then add it to revoked_token table
+                    if (decoded?.jti && decoded?.exp) {
+                        // convert number to a date
+                        const expiresAt = new Date(decoded.exp * 1000);
+                        // tell the database to blacklist this specific jti
+                        await AuthService.revokeToken(decoded.jti, decoded.id, expiresAt);
+                    }
+                } catch (revokeError) {
+                    console.error('Token revocation failed during sign out:', revokeError.message);
                 }
             }
-            // tell the browser to delete the token cookie 
+            // tell the browser to delete the token cookie
             res.clearCookie('token', {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',

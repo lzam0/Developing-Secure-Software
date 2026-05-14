@@ -45,11 +45,11 @@ export function validateCSRF(req, res, next) {
             if(!timingSafeEqual(cookieBuffer, headerBuffer)){
                 //tokens do not match
                 console.log("CSRF Tokens do not match");
-                res.status(403).json({
+                return res.status(403).json({
                     success:false,
                     message:"CSRF Token Error"
                 });
-                
+
             } else{
                 //tokens match -> allow call
                 next();

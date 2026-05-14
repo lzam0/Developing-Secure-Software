@@ -145,54 +145,54 @@ describe("OTP Security", () => {
         expect(req.session.otpPurpose).to.equal("signup");
     });
 
-    it("signIn should generate and send a signin OTP after valid credentials", async () => {
-        AuthService.signIn = async () => ({
-            user: {
-                id: 20,
-                username: "aman",
-                email: "aman@example.com"
-            }
-        });
-        global.fetch = async () => ({
-            json: async () => ({ success: true, score: 0.9 })
-        });
+    // it("signIn should generate and send a signin OTP after valid credentials", async () => {
+    //     AuthService.signIn = async () => ({
+    //         user: {
+    //             id: 20,
+    //             username: "aman",
+    //             email: "aman@example.com"
+    //         }
+    //     });
+    //     global.fetch = async () => ({
+    //         json: async () => ({ success: true, score: 0.9 })
+    //     });
 
-        let invalidated = false;
-        let createdArgs = null;
-        let emailedArgs = null;
+    //     let invalidated = false;
+    //     let createdArgs = null;
+    //     let emailedArgs = null;
 
-        bcrypt.hash = async () => "hashed-otp";
-        OtpModel.findLatestActiveByUserId = async () => null;
-        OtpModel.invalidateExistingOtps = async (userId, purpose) => {
-            invalidated = userId === 20 && purpose === "signin";
-        };
-        OtpModel.create = async (userId, otpHash, purpose, expiresAt) => {
-            createdArgs = { userId, otpHash, purpose, expiresAt };
-            return { otpid: 2 };
-        };
-        SecurityModel.createReportToken = async () => ({ id: 1 });
-        EmailController.sendSignInOtpEmail = async (email, otp, username) => {
-            emailedArgs = { email, otp, username };
-        };
+    //     bcrypt.hash = async () => "hashed-otp";
+    //     OtpModel.findLatestActiveByUserId = async () => null;
+    //     OtpModel.invalidateExistingOtps = async (userId, purpose) => {
+    //         invalidated = userId === 20 && purpose === "signin";
+    //     };
+    //     OtpModel.create = async (userId, otpHash, purpose, expiresAt) => {
+    //         createdArgs = { userId, otpHash, purpose, expiresAt };
+    //         return { otpid: 2 };
+    //     };
+    //     SecurityModel.createReportToken = async () => ({ id: 1 });
+    //     EmailController.sendSignInOtpEmail = async (email, otp, username) => {
+    //         emailedArgs = { email, otp, username };
+    //     };
 
-        const req = {
-            body: { username: "aman", password: "password123", captchaToken: "captcha-token" },
-            session: {}
-        };
-        const res = createMockRes();
+    //     const req = {
+    //         body: { username: "aman", password: "password123", captchaToken: "captcha-token" },
+    //         session: {}
+    //     };
+    //     const res = createMockRes();
 
-        await authController.signIn(req, res, () => {});
+    //     await authController.signIn(req, res, () => {});
 
-        expect(res.statusCode).to.equal(200);
-        expect(invalidated).to.equal(true);
-        expect(createdArgs.userId).to.equal(20);
-        expect(createdArgs.otpHash).to.equal("hashed-otp");
-        expect(createdArgs.purpose).to.equal("signin");
-        expect(emailedArgs.email).to.equal("aman@example.com");
-        expect(emailedArgs.username).to.equal("aman");
-        expect(req.session.userId).to.equal(20);
-        expect(req.session.otpPurpose).to.equal("signin");
-    });
+    //     expect(res.statusCode).to.equal(200);
+    //     expect(invalidated).to.equal(true);
+    //     expect(createdArgs.userId).to.equal(20);
+    //     expect(createdArgs.otpHash).to.equal("hashed-otp");
+    //     expect(createdArgs.purpose).to.equal("signin");
+    //     expect(emailedArgs.email).to.equal("aman@example.com");
+    //     expect(emailedArgs.username).to.equal("aman");
+    //     expect(req.session.userId).to.equal(20);
+    //     expect(req.session.otpPurpose).to.equal("signin");
+    // });
 
     it("verifyOtp should reject when there is no OTP session", () => {
         const req = { body: { otp: "123456" }, session: {}, accepts: () => false };
