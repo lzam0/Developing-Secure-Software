@@ -27,8 +27,14 @@ export class PaymentController {
                         userId: String(req.user.id)
                     }
                 },
+                // WORKS TAKES TO THIS PAGE
                 success_url: `${process.env.CLIENT_URL}/payment-success.html`,
+
+                // DOESNT WORK TAKE TO THIS PAGE
                 cancel_url: `${process.env.CLIENT_URL}/payment-cancel.html`,
+                
+                // CHEK THE STRIPE TRANSACTION SESSION
+                // AUTOMATICALLY 24HRS NOW - 30 mins
                 expires_at: Math.floor(Date.now() /1000) + (30*60)
             });
 

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     userid SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
+    email_lookup VARCHAR(64) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -83,14 +84,13 @@ CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires ON revoked_tokens(expires_
 
 -- INSERT TEST USER
 --- PASSWORD IS "123" WITH BCRYPT HASH + PEPPER + SALT_ROUNDS 10
-INSERT INTO users (username, email, password, is_verified) 
+INSERT INTO users (username, email, email_lookup, password, is_verified)
 VALUES
-('testuser', 'testuser@example.com', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
-('leihl', 'psh22xtu@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
-('katrina', 'k.cuevas@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
-('chantelle', 'chantelle.todd@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
-('aman', 'aman.dosanjh@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
-('dylan', 'dylan.young@uea.ac.uk', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE)
-ON CONFLICT (email) DO NOTHING;
+('testuser', 'v1:a8e0c06b94159d44b0464209:dd138dca6c1f46fd2d36e2e423f1ca93:68c302b0d52d5ba899176aa8a2cc7548988c191c', '8b2a0c454ef5abf3695a46d434353de745d35a46a7e698ff354dd94bc111a8f7', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('katrina', 'v1:28dfb12790fe3b45066f478f:b29120cf93ac643536e32f55b20c57ce:1ea8a295bd4e47ca05ec54d9519edc0e1909', '16bd67fdfeb12ddf2f6487b058ef039fa5edffeeba7fa8593820003998b3f395', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('chantelle', 'v1:e7b7cbfed767bf1dc6768666:df2626be4d59289db6384c6bc126edfe:e8fdd7abda8286f20e7cf0f85aa83de0a4cf577507f3b130', '5a98d9194292ae7314d07fd710429e95bdb60f0124bb419773879d31af42c4c6', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('aman', 'v1:a1c7fc1dfd35192a9d2aae9a:57a680f01b448a63cf85eb32fd6adc99:2dc9c085499313ba2f65ffb4140627f37b1f7866f6c2', 'd9e3983529202840f4d5693c81829770a09eef8b36a6a5c6f6259973dfd77513', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE),
+('dylan', 'v1:97c710dd0fce9552c019e7d5:ca7a5b942447d9172bf1510ccb97c8eb:4cbf9c5f994b26b8b73f46f003f72b958164d40448', 'f9d3bfb932429da56450e860212ca28170379bda43f38bc22f2766a47c7099a1', '$2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG', TRUE)
+ON CONFLICT (username) DO NOTHING;
 
 -- 2b$10$MmMPHA3vryoI1p33LRJIMu3Pma.T5r6juHZ2o6kxAm2zglOfdw7vG

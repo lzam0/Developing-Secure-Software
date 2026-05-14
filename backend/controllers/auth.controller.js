@@ -18,11 +18,14 @@ function generateOtp() {
     return crypto.randomInt(100000, 1000000).toString();
 }
 
+// Create a new session after sign up or sign in
+// store the user ID and OTP purpose in the session for later verification
 async function regenerateSession(req) {
     if (!req.session?.regenerate) {
         return;
     }
 
+    // regenerate the session to prevent session fixation attacks, and promisify it to use async/await
     await new Promise((resolve, reject) => {
         req.session.regenerate((error) => {
             if (error) reject(error);
@@ -33,117 +36,126 @@ async function regenerateSession(req) {
 
 export class AuthController {
     /**
- * POST /api/auth/signup
- * Sign Up a new user
- */
-  static async signUp(req, res, next) {
-    try {
-        console.log("SIGN UP CALL")
+    * POST /api/auth/signup
+    * Sign Up a new user
+    **/
+    static async signUp(req, res, next) {
+        try {
+            console.log("SIGN UP CALL")
 
-        const { username, email, password, captchaToken } = req.body;
+            // Extract username, email, password, and captchaToken from the request body
+            const { username, email, password, captchaToken } = req.body;
 
-        // Validate Input
-        if (!username || !email || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
+            // Validate Input
+            if (!username || !email || !password) {
+                return res.status(400).json({ message: "All fields are required" });
+            }
 
-        if (!captchaToken) {
-            return res.status(400).json({ message: "Security check missing. Please refresh." });
-        }
+            // Check if captchaToken is present
+            if (!captchaToken) {
+                return res.status(400).json({ message: "Security check missing. Please refresh." });
+            }
 
-        const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+            // Verify the captchaToken with Google's reCAPTCHA API to ensure the request is from a human and not a bot
+            const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+            const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 
-        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
-
-        // Verify with Google
-        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
-        const recaptchaData = await recaptchaRes.json();
+            // Verify with Google
+            const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+            const recaptchaData = await recaptchaRes.json();
 
 
-        // Check Google's score
-        if (!recaptchaData.success || recaptchaData.score < 0.5) {
-            return res.status(403).json({ 
-                success: false, 
-                message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
-            });
-        }
-        console.log("Recaptcha Data from Google:", recaptchaData);
+            // Check Google's score
+            if (!recaptchaData.success || recaptchaData.score < 0.5) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: "We were unable to verify your connection. If you are using a VPN or an ad-blocker, please try disabling them and refreshing the page." 
+                });
+            }
+            console.log("Recaptcha Data from Google:", recaptchaData);
 
-        
+            
 
-        // If the reCAPTCHA passed, call the AuthService to handle user registration
-        const result = await AuthService.signUp(username, email, password);
+            // If the reCAPTCHA passed, call the AuthService to handle user registration
+            const result = await AuthService.signUp(username, email, password);
 
-        // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the username/email already exists
-        if (!result.user) {
+            // Anti-enumeration path: if no user object is returned, respond generically without revealing whether the email/username already exists
+            if (!result.user) {
+                return res.status(201).json({
+                    success: true,
+                    message: result.message,
+                    data: {
+                        status: result.status
+                    }
+                });
+            }
+
+            // Generate signup verification OTP
+            const otp = generateOtp();
+            const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+            
+            // Invalidate any existing OTPs for this user and purpose
+            // then create a new OTP record in the database with the hashed OTP, purpose, and expiry time
+            await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
+            await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
+
+            // Regenerate the session to prevent session fixation
+            await regenerateSession(req);
+            req.session.userId = result.user.id;
+            req.session.otpPurpose = 'signup';
+
+            // Send the OTP to the user's email for verification using the EmailController
+            await EmailController.sendSignUpOtpEmail(
+                result.user.email,
+                otp,
+                result.user.username
+            );
+            
+            // Respond with a generic success message indicating that the registration was successful and an OTP has been sent
+            // It does not reveal whether the email/username already exists or not, to prevent user enumeration attacks
             return res.status(201).json({
                 success: true,
                 message: result.message,
-                data: {
-                    status: result.status
-                }
+                data: result
             });
+            
         }
-
-        // Generate signup verification OTP
-        const otp = generateOtp();
-        const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-        await OtpModel.invalidateExistingOtps(result.user.id, 'signup');
-        await OtpModel.create(result.user.id, otpHash, 'signup', expiresAt);
-
-        await regenerateSession(req);
-        req.session.userId = result.user.id;
-        req.session.otpPurpose = 'signup';
-
-        await EmailController.sendSignUpOtpEmail(
-            result.user.email,
-            otp,
-            result.user.username
-        );
-                
-        return res.status(201).json({
-            success: true,
-            message: result.message,
-            data: result
-        });
-        
+        catch (error) {
+            console.error("sign up call error:", error);
+            next(error);
+        }
     }
-    catch (error) {
-        console.error("sign up call error:", error);
-        next(error);
-    }
-}
-    /**
- * POST /api/auth/signin
- * Sign In an existing user
- */
+
+    /** POST /api/auth/signin
+     * Sign In an existing user
+     */
     static async signIn(req, res, next) {
-        try {
-            // Extract identifier (email or username) and password from request body
-            const { identifier, username, email, password, captchaToken } = req.body;
-            const loginIdentifier = identifier || email || username;
+        try {    
+            // Extract email and password from request body
+            const { identifier, email, password, captchaToken } = req.body;
+            const loginEmail = email || identifier;
             // Validate Input
-            if (!loginIdentifier || !password) {
+            if (!loginEmail || !password) {
                 res.status(400).json({
                     success: false,
-                    message: 'Username/email and password are required'
+                    message: 'Email and password are required'
                 });
                 return;
             }
 
-            
-        if (!captchaToken) {
-            return res.status(400).json({ message: "Security check missing. Please refresh." });
-        }
+            // Check if captchaToken is present
+            if (!captchaToken) {
+                return res.status(400).json({ message: "Security check missing. Please refresh." });
+            }
 
-        const SECRET_KEY = process.env.RECAPTCHA_SECRET;
-        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
+            // Verify the captchaToken with Google's reCAPTCHA API to ensure the request is from a human and not a bot
+            const SECRET_KEY = process.env.RECAPTCHA_SECRET;
+            const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`;
 
-        // Verify with Google
-        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
-        const recaptchaData = await recaptchaRes.json();
+            // Verify with Google
+            const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+            const recaptchaData = await recaptchaRes.json();
 
         // Check Google's score
         if (!recaptchaData.success || recaptchaData.score < 0.5) {
@@ -155,7 +167,7 @@ export class AuthController {
         console.log("Recaptcha Data from Google:", recaptchaData);
         
         // Call the AuthService to handle user authentication
-        const result = await AuthService.signIn(loginIdentifier, password);
+        const result = await AuthService.signIn(loginEmail, password);
 
         // Check if there's already an active OTP for the user
         const existingOtp = await OtpModel.findLatestActiveByUserId(
@@ -170,17 +182,18 @@ export class AuthController {
             });
         }
 
-        // Generate login 2FA OTP
-        const otp = generateOtp();
-        const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+            // Generate login 2FA OTP
+            const otp = generateOtp();
+            const otpHash = await bcrypt.hash(otp, parseInt(process.env.SALT_ROUNDS, 10));
+            const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-        await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
-        await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
+            // Invalidate any existing OTPs for this user and purpose
+            await OtpModel.invalidateExistingOtps(result.user.id, 'signin');
+            await OtpModel.create(result.user.id, otpHash, 'signin', expiresAt);
 
-        await regenerateSession(req);
-        req.session.userId = result.user.id;
-        req.session.otpPurpose = 'signin';
+            await regenerateSession(req);
+            req.session.userId = result.user.id;
+            req.session.otpPurpose = 'signin';
 
         //Create a separate secure token for reporting a suspicious sign-in OTP email
         const reportToken = crypto.randomBytes(32).toString('hex');
@@ -205,28 +218,27 @@ export class AuthController {
         //Send the plain token only inside the email link; validation will compare its hash
         const reportUrl = `${process.env.CLIENT_URL}/security/report-otp?token=${reportToken}`;
 
-        await EmailController.sendSignInOtpEmail(
-            result.user.email,
-            otp,
-            result.user.username,
-            reportUrl
-        );
+            await EmailController.sendSignInOtpEmail(
+                result.user.email,
+                otp,
+                result.user.username,
+                reportUrl
+            );
 
-        return res.status(200).json({
-            success: true,
-            message: 'Verification code sent to email.'
-        });
+            // Generic success message
+            return res.status(200).json({ success: true, message: 'Verification code sent to email.'});
+        }catch (error) {
+            // Pass error to error handling middleware
+            console.error(error);
+            next(error);
         }
-    catch (error) {
-        // Pass error to error handling middleware
-        console.error(error);
-        next(error);
-    }
     }
 
+    // POST /api/auth/verify-otp
     static async verifyOtp(req, res, next) {
-    try {
-        const { otp } = req.body;
+        try {
+            // Extract the OTP from the request body
+            const { otp } = req.body;
 
         //load the newest unused OTP for the user and purpose stored in the temp session
         const otpRecord = await OtpModel.findLatestActiveByUserId(
@@ -234,12 +246,15 @@ export class AuthController {
             req.session.otpPurpose
         );
 
-        if (!otpRecord) {
-            return res.status(400).json({
-                success: false,
-                message: 'No active verification code found'
-            });
-        }
+            // No active OTP found for this user and purpose
+            // OTP was already used, expired, or never generated
+            // Respond with a generic message to avoid revealing which case it is
+            if (!otpRecord) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No active verification code found'
+                });
+            }
 
         //expired OTPs are marked used so they can't be retried later
         if (new Date() > new Date(otpRecord.expires_at)) {
@@ -263,13 +278,13 @@ export class AuthController {
         //compare submitted code against the stored bcrypt hash
         const isOtpValid = await bcrypt.compare(otp, otpRecord.otp_hash);
 
-        if (!isOtpValid) {
-            await OtpModel.incrementAttempts(otpRecord.otpid);
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid verification code'
-            });
-        }
+            if (!isOtpValid) {
+                await OtpModel.incrementAttempts(otpRecord.otpid);
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid verification code'
+                });
+            }
 
         //a valid OTP is single-use, even after successful verification
         await OtpModel.markUsed(otpRecord.otpid);
@@ -280,12 +295,12 @@ export class AuthController {
 
             req.session.destroy(() => {});
 
-            return res.status(200).json({
-                success: true,
-                message: 'Email verified successfully',
-                redirectTo: 'login.html'
-            });
-        }
+                return res.status(200).json({
+                    success: true,
+                    message: 'Email verified successfully',
+                    redirectTo: 'login.html'
+                });
+            }
 
         //sign in OTPs complete authentication by issuing JWT and CSRF cookies
         if (req.session.otpPurpose === 'signin') {
@@ -322,23 +337,25 @@ export class AuthController {
             //clear the temp OTP session once persistent auth cookies are issued
             req.session.destroy(() => {});
 
-            return res.status(200).json({
-                success: true,
-                message: 'Login successful',
-                redirectTo: 'blogListingPage.html'
+                // Respond with a success message
+                return res.status(200).json({
+                    success: true,
+                    message: 'Login successful',
+                    redirectTo: 'blogListingPage.html'
+                });
+            }
+
+            // If OTP is valid but purpose is unknown, respond with an error
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid OTP purpose'
             });
+
+        } catch (error) {
+            console.error(error);
+            next(error);
         }
-
-        return res.status(400).json({
-            success: false,
-            message: 'Invalid OTP purpose'
-        });
-
-    } catch (error) {
-        console.error(error);
-        next(error);
     }
-}
 
     /**
  * POST /api/auth/signout

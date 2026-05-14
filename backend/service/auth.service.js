@@ -62,19 +62,26 @@ export class AuthService {
     // Check if user already exists
     // Check if the email is taken OR if the username is taken
     const [existingEmail, existingUsername] = await Promise.all([
-    UserModel.findByEmail(email),
-    UserModel.findByUsername(username)
-]);
+        UserModel.findByEmail(email),
+        UserModel.findByUsername(username)
+    ]);
     
         // ANTI-ACCOUNT ENUMERATION: If user exists, dont throw error, hide it
         if (existingEmail || existingUsername) {
             //fake hash so the response time matches real
+            // PASSWORD = YELLOW 
+            // SALT = BLUE
+
+            // HASH the salt and password together
+
+            // Add extra pepper to make it secure
             await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
             await addJitter(); // add random delay to make timing attacks harder
 
         
            
-            //returning a generic error message - what a successful registration would look like, to prevent user enumeration
+            //returning a generic error message
+            // what a successful registration would look like, to prevent user enumeration
             return{
                 message: 'A verification email has been sent to your email address. Please check your inbox and follow the instructions to complete your registration.',
                 status: 'pending'
@@ -103,7 +110,9 @@ export class AuthService {
         const newUser = await UserModel.create(username, email, hashedPassword);
         await addJitter(); // add random delay to make timing attacks harder
                 
-        // userID, username, email, token SHOULD ONLY BE RETURNED IN THE SIGN IN, NOT SIGN UP. IN SIGN UP, WE WANT TO RETURN A GENERIC SUCCESS MESSAGE TO PREVENT ACCOUNT ENUMERATION
+        // userID, username, email, token 
+        // SHOULD ONLY BE RETURNED IN THE SIGN IN, NOT SIGN UP.
+        //  IN SIGN UP, WE WANT TO RETURN A GENERIC SUCCESS MESSAGE TO PREVENT ACCOUNT ENUMERATION
             return {
         message: 'A verification email has been sent to your email address. Please check your inbox and follow the instructions to complete your registration.',
         status: 'pending',
@@ -116,10 +125,18 @@ export class AuthService {
     };
 
     // Sign In User
-    static async signIn(identifier, password) {
+    static async signIn(email, password) {
 
-        // Find user by email or username
-        const user = await UserModel.findByEmailOrUsername(identifier);
+        if (!this.validateEmail(email)) {
+            await bcrypt.hash(password + PEPPER, SALT_ROUNDS);
+            await addJitter();
+            const err = new Error('Invalid credentials');
+            err.statusCode = 401;
+            throw err;
+        }
+
+        // Find user by encrypted email lookup only
+        const user = await UserModel.findByEmail(email);
 
         // If user not found, throw an error
         if (!user) {
@@ -148,7 +165,8 @@ export class AuthService {
         
         await addJitter(); // add random delay to make timing attacks harder
 
-        // Return user details only - JWT is issued after OTP verification in the controller
+        // Return user details only
+        // JWT is issued after OTP verification in the controller
         return {
             user: {
                 id: user.id,

@@ -1,6 +1,7 @@
 // Reusable auth verification utility
 // Must be loaded before auth-guard.js and header.js
 
+// Base URL for backend API calls
 const BACKEND_URL = window.location.origin;
 
 // Returns true if the user has a valid JWT cookie, false otherwise.

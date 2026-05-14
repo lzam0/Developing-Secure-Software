@@ -4,9 +4,7 @@ document.getElementById("mfa_form").addEventListener("submit", async (e) => {
     const otp = document.getElementById("mfa_code_input").value.trim();
 
     try {
-        const API_BASE = window.location.origin === "null" ? "http://localhost:5050" : "";
-
-        const response = await fetch(`${API_BASE}/auth/verify-otp`, {
+        const response = await fetch(`${BACKEND_URL}/auth/verify-otp`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

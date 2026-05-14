@@ -16,10 +16,13 @@ const JWT_SECRET = process.env.JWT_WEB_TOKEN_SECRET;
  */
 // changed to async to query the database for blacklist check
 export const authenticateToken = async (req, res, next) => {
+
     // Information log for debugging
     console.log('Authenticating token...');
+    
     // Check cookies for token
     const token = req.cookies?.token;
+    
     // Helper: HTML page requests get a redirect to login; API requests get JSON
     const rejectRequest = (res, req, status, message) => {
         if (req.accepts('html')) {
@@ -71,6 +74,8 @@ export const authenticateToken = async (req, res, next) => {
         return;
     }
 
+    // if we get here, the token is valid and not revoked,
+    //  so we can attach the user info to the request object for use in later middleware/routes
     const userResult = await pool.query(
         `SELECT 
             userid AS id,

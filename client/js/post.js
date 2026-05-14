@@ -1,3 +1,8 @@
+// Client-side JavaScript for creating and publishing blog posts
+// This file is included in newPost.html and editPost.html, which share the same form structure for creating and editing posts.
+// The backend endpoint for both creating and editing posts is /posts, with POST for creation and PUT for editing.
+
+// Global variables to store post data for editing
 function handleThumb(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -20,16 +25,21 @@ function handleThumb(event) {
     reader.readAsDataURL(file);
 }
 
+// Publish a new post by sending a POST request to the backend with the form data
 async function publishPost() {
+    // Get title, tags, and content from the form fields
+    // Trim whitespace and validate that required fields are not empty
     const title = document.getElementById("post-title").value.trim();
     const tags = document.getElementById("category").value;
     const content = document.getElementById("post-body").value.trim();
 
+    // If any required field is empty, show an alert and prevent submission
     if (!title || !tags || !content) {
         alert("Please fill in all required fields (title, category, and content).");
         return;
     }
 
+    // Form data to be sent in the request body as a json object
     try {
         const response = await fetch(`${BACKEND_URL}/posts`, {
             method: "POST",
@@ -53,5 +63,6 @@ async function publishPost() {
     }
 }
 
+// Load post data for editing by sending a GET request to the backend with the post hex from the query string
 document.getElementById("thumbInput")?.addEventListener("change", handleThumb);
 document.getElementById("publish-post-button")?.addEventListener("click", publishPost);

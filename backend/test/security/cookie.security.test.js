@@ -7,7 +7,7 @@ import { validToken, wrongSecretToken, TEST_SECRET } from '../helpers/tokenFacto
 async function getSetCookieHeader(app) {
     const res = await request(app)
         .post('/auth/signin')
-        .send({ identifier: 'testuser', password: 'Password123' });
+        .send({ email: 'testuser@example.com', password: 'Password123' });
     expect(res.status).to.equal(200);
     const setCookie = res.headers['set-cookie'];
     return Array.isArray(setCookie) ? setCookie[0] : setCookie;
@@ -93,7 +93,7 @@ describe('Cookie Security — XSS Theft Simulation', () => {
     it('should not leak the raw JWT value in the /auth/signin response body', async () => {
         const res = await request(app)
             .post('/auth/signin')
-            .send({ identifier: 'testuser', password: 'Password123' });
+            .send({ email: 'testuser@example.com', password: 'Password123' });
         const bodyStr = JSON.stringify(res.body);
         // JWTs always start with eyJ (base64url of {"alg":...}) — if present, the token leaked
         const jwtPattern = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*/;
